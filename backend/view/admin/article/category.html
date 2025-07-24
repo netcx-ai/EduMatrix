@@ -1,0 +1,163 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-card">
+    <div class="layui-card-header">
+        <span>文章分类管理</span>
+        <div class="layui-btn-group" style="float: right;">
+            <button class="layui-btn layui-btn-sm" id="addCategory">
+                <i class="layui-icon">&#xe654;</i> 添加分类
+            </button>
+            <button class="layui-btn layui-btn-sm layui-btn-normal" id="refresh">
+                <i class="layui-icon">&#xe669;</i> 刷新
+            </button>
+        </div>
+    </div>
+    <div class="layui-card-body">
+        <!-- 搜索区域 -->
+        <div class="layui-form layui-form-pane" style="margin-bottom: 10px;">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">关键词</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="keyword" placeholder="分类名称或描述" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <button class="layui-btn" id="search">
+                        <i class="layui-icon">&#xe615;</i> 搜索
+                    </button>
+                    <button class="layui-btn layui-btn-primary" id="reset">
+                        <i class="layui-icon">&#xe669;</i> 重置
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据表格 -->
+        <table id="categoryTable" lay-filter="categoryTable"></table>
+    </div>
+</div>
+
+<!-- 表格操作列模板 -->
+<script type="text/html" id="operationTpl">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<!-- 状态列模板 -->
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 1){ }}
+        <span class="layui-badge layui-bg-green">启用</span>
+    {{# } else { }}
+        <span class="layui-badge layui-bg-gray">禁用</span>
+    {{# } }}
+</script>
+
+<!-- 父分类列模板 -->
+<script type="text/html" id="parentTpl">
+    {{# if(d.parent_id == 0){ }}
+        <span class="layui-badge layui-bg-blue">顶级分类</span>
+    {{# } else { }}
+        {{d.parent_name || '未知'}}
+    {{# } }}
+</script>
+{/block}
+
+{block name="script"}
+<script>
+layui.use(['table', 'layer', 'form'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var form = layui.form;
+    
+    // 渲染表格
+    var tableIns = table.render({
+        elem: '#categoryTable',
+        url: '/admin/article/category',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'name', title: '分类名称', width: 150},
+            {field: 'code', title: '分类代码', width: 120},
+            {field: 'description', title: '描述', width: 200},
+            {field: 'parent_id', title: '父分类', width: 120, templet: '#parentTpl'},
+            {field: 'sort', title: '排序', width: 80, sort: true},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {field: 'create_time', title: '创建时间', width: 160},
+            {title: '操作', width: 150, toolbar: '#operationTpl', fixed: 'right'}
+        ]],
+        limits: [10, 20, 50, 100],
+        limit: 10
+    });
+    
+    // 搜索功能
+    $('#search').click(function(){
+        var keyword = $('input[name="keyword"]').val();
+        tableIns.reload({
+            where: {
+                keyword: keyword
+            },
+            page: {
+                curr: 1
+            }
+        });
+    });
+    
+    // 重置功能
+    $('#reset').click(function(){
+        $('input[name="keyword"]').val('');
+        tableIns.reload({
+            where: {},
+            page: {
+                curr: 1
+            }
+        });
+    });
+    
+    // 刷新功能
+    $('#refresh').click(function(){
+        tableIns.reload();
+    });
+    
+    // 添加分类
+    $('#addCategory').click(function(){
+        layer.open({
+            type: 2,
+            title: '添加分类',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['600px', '500px'],
+            content: '/admin/article/addCategory'
+        });
+    });
+    
+    // 监听工具条
+    table.on('tool(categoryTable)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'edit'){
+            layer.open({
+                type: 2,
+                title: '编辑分类',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['600px', '500px'],
+                content: '/admin/article/editCategory?id=' + data.id
+            });
+        } else if(obj.event === 'del'){
+            layer.confirm('确定删除此分类吗？', function(index){
+                $.post('/admin/article/deleteCategory', {id: data.id}, function(res){
+                    if(res.code === 0){
+                        layer.msg('删除成功', {icon: 1});
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '删除失败', {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        }
+    });
+});
+</script>
+{/block} 

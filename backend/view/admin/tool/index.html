@@ -1,0 +1,201 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <div class="layui-row">
+                <div class="layui-col-md6">
+                    <h3>工具配置</h3>
+                </div>
+                <div class="layui-col-md6" style="text-align: right;">
+                    <button class="layui-btn layui-btn-sm" id="addTool">
+                        <i class="layui-icon layui-icon-add-1"></i> 添加配置
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="layui-card-body">
+            <!-- 搜索栏 -->
+            <div class="layui-form layui-form-pane" style="margin-bottom: 15px;">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">配置名称</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="name" placeholder="请输入配置名称" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">配置类型</label>
+                        <div class="layui-input-inline">
+                            <select name="type">
+                                <option value="">全部类型</option>
+                                <option value="api">API配置</option>
+                                <option value="system">系统配置</option>
+                                <option value="other">其他配置</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">状态</label>
+                        <div class="layui-input-inline">
+                            <select name="status">
+                                <option value="">全部状态</option>
+                                <option value="1">启用</option>
+                                <option value="0">停用</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn" lay-submit lay-filter="searchForm">
+                            <i class="layui-icon layui-icon-search"></i> 搜索
+                        </button>
+                        <button class="layui-btn layui-btn-primary" id="resetSearch">重置</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <table id="toolTable" lay-filter="toolTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 表格操作按钮 -->
+<script type="text/html" id="toolTableBar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="view">查看</a>
+    {{# if(d.status == 1){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="disable">停用</a>
+    {{# } else { }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+</script>
+
+<!-- 状态显示 -->
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 1){ }}
+    <span class="layui-badge layui-bg-green">启用</span>
+    {{# } else { }}
+    <span class="layui-badge layui-bg-gray">停用</span>
+    {{# } }}
+</script>
+
+{block name="script"}
+<script>
+layui.use(['table', 'form', 'layer'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    
+    // 渲染表格
+    var tableIns = table.render({
+        elem: '#toolTable',
+        url: '/admin/tool/index',
+        page: true,
+        where: {ajax: 1},
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'name', title: '工具名称', width: 200},
+            {field: 'code', title: '工具编码', width: 120},
+            {field: 'category', title: '工具类型', width: 120},
+            {field: 'description', title: '描述', width: 200},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {field: 'create_time', title: '创建时间', width: 180},
+            {field: 'update_time', title: '更新时间', width: 180},
+            {title: '操作', width: 200, align: 'center', toolbar: '#toolTableBar'}
+        ]],
+        limits: [10, 20, 50, 100],
+        limit: 20
+    });
+    
+    // 搜索功能
+    form.on('submit(searchForm)', function(data){
+        tableIns.reload({
+            where: data.field,
+            page: {curr: 1}
+        });
+        return false;
+    });
+    
+    // 重置搜索
+    $('#resetSearch').on('click', function(){
+        $('input[name="name"]').val('');
+        $('select[name="type"]').val('');
+        $('select[name="status"]').val('');
+        form.render('select');
+        tableIns.reload({
+            where: {},
+            page: {curr: 1}
+        });
+    });
+    
+    // 添加配置
+    $('#addTool').on('click', function(){
+        layer.open({
+            type: 2,
+            title: '添加配置',
+            area: ['800px', '600px'],
+            content: '/admin/tool/add'
+        });
+    });
+    
+    // 监听工具条
+    table.on('tool(toolTable)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'edit'){
+            layer.open({
+                type: 2,
+                title: '编辑配置',
+                area: ['800px', '600px'],
+                content: '/admin/tool/edit?id=' + data.id
+            });
+        } else if(obj.event === 'view'){
+            layer.open({
+                type: 2,
+                title: '查看配置',
+                area: ['800px', '600px'],
+                content: '/admin/tool/detail?id=' + data.id
+            });
+        } else if(obj.event === 'enable'){
+            layer.confirm('确定要启用该配置吗？', function(index){
+                $.post('/admin/tool/changeStatus', {id: data.id, status: 1}, function(res){
+                    if(res.code === 0){
+                        layer.msg('启用成功', {icon: 1});
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '启用失败', {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'disable'){
+            layer.confirm('确定要停用该配置吗？', function(index){
+                $.post('/admin/tool/changeStatus', {id: data.id, status: 0}, function(res){
+                    if(res.code === 0){
+                        layer.msg('停用成功', {icon: 1});
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '停用失败', {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'del'){
+            layer.confirm('确定要删除该配置吗？此操作不可恢复！', function(index){
+                $.post('/admin/tool/delete', {id: data.id}, function(res){
+                    if(res.code === 0){
+                        layer.msg('删除成功', {icon: 1});
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '删除失败', {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        }
+    });
+});
+</script>
+{/block} 

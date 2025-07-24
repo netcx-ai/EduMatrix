@@ -1,0 +1,303 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-fluid">
+    <!-- 统计卡片 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-home" style="color: #1E9FFF;"></i>
+                    学校总数
+                </div>
+                <div class="layui-card-body">
+                    <h2>{$stats.school_count|default=0}</h2>
+                    <p>活跃学校: {$stats.active_school_count|default=0}</p>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-tabs" style="color: #5FB878;"></i>
+                    学院总数
+                </div>
+                <div class="layui-card-body">
+                    <h2>{$stats.college_count|default=0}</h2>
+                    <p>活跃学院: {$stats.active_college_count|default=0}</p>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-user" style="color: #FFB800;"></i>
+                    教师总数
+                </div>
+                <div class="layui-card-body">
+                    <h2>{$stats.teacher_count|default=0}</h2>
+                    <p>活跃教师: {$stats.active_teacher_count|default=0}</p>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-file" style="color: #FF5722;"></i>
+                    课程总数
+                </div>
+                <div class="layui-card-body">
+                    <h2>{$stats.course_count|default=0}</h2>
+                    <p>进行中: {$stats.active_course_count|default=0}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="layui-row layui-col-space15">
+        <!-- 学校分布统计 -->
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header">学校分布统计</div>
+                <div class="layui-card-body">
+                    <div id="schoolChart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 教师职称分布 -->
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header">教师职称分布</div>
+                <div class="layui-card-body">
+                    <div id="teacherChart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="layui-row layui-col-space15">
+        <!-- 课程状态分布 -->
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header">课程状态分布</div>
+                <div class="layui-card-body">
+                    <div id="courseChart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 月度增长趋势 -->
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header">月度增长趋势</div>
+                <div class="layui-card-body">
+                    <div id="trendChart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 详细数据表格 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">学校详细统计</div>
+                <div class="layui-card-body">
+                    <table id="schoolStatsTable" lay-filter="schoolStatsTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+// 统计数据
+var statsData = {
+    active_school_count: {$stats.active_school_count|default=0},
+    pending_school_count: {$stats.pending_school_count|default=0},
+    suspended_school_count: {$stats.suspended_school_count|default=0},
+    professor_count: {$stats.professor_count|default=0},
+    associate_professor_count: {$stats.associate_professor_count|default=0},
+    lecturer_count: {$stats.lecturer_count|default=0},
+    assistant_count: {$stats.assistant_count|default=0},
+    active_course_count: {$stats.active_course_count|default=0},
+    ended_course_count: {$stats.ended_course_count|default=0},
+    pending_course_count: {$stats.pending_course_count|default=0},
+    rejected_course_count: {$stats.rejected_course_count|default=0}
+};
+
+layui.use(['table', 'layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    
+    // 渲染学校统计表格
+    table.render({
+        elem: '#schoolStatsTable',
+        url: '/admin/stats/getSchoolStats',
+        page: true,
+        cols: [[
+            {field: 'school_name', title: '学校名称', width: 200},
+            {field: 'college_count', title: '学院数', width: 100, align: 'center'},
+            {field: 'teacher_count', title: '教师数', width: 100, align: 'center'},
+            {field: 'course_count', title: '课程数', width: 100, align: 'center'},
+            {field: 'student_count', title: '学生数', width: 100, align: 'center'},
+            {field: 'active_rate', title: '活跃度', width: 100, align: 'center'},
+            {field: 'create_time', title: '创建时间', width: 180}
+        ]],
+        limits: [10, 20, 50],
+        limit: 10
+    });
+    
+    // 学校分布统计
+    var schoolChart = echarts.init(document.getElementById('schoolChart'));
+    schoolChart.setOption({
+        title: {
+            text: '学校状态分布',
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 'left'
+        },
+                    series: [{
+                name: '学校状态',
+                type: 'pie',
+                radius: '50%',
+                data: [
+                    {value: statsData.active_school_count, name: '正常'},
+                    {value: statsData.pending_school_count, name: '待审核'},
+                    {value: statsData.suspended_school_count, name: '已停用'}
+                ]
+            }]
+    });
+    
+    // 教师职称分布
+    var teacherChart = echarts.init(document.getElementById('teacherChart'));
+    teacherChart.setOption({
+        title: {
+            text: '教师职称分布',
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'axis'
+        },
+        xAxis: {
+            type: 'category',
+            data: ['教授', '副教授', '讲师', '助教']
+        },
+        yAxis: {
+            type: 'value'
+        },
+                    series: [{
+                name: '教师数量',
+                type: 'bar',
+                data: [
+                    statsData.professor_count,
+                    statsData.associate_professor_count,
+                    statsData.lecturer_count,
+                    statsData.assistant_count
+                ],
+                itemStyle: {
+                    color: '#409EFF'
+                }
+            }]
+    });
+    
+    // 课程状态分布
+    var courseChart = echarts.init(document.getElementById('courseChart'));
+    courseChart.setOption({
+        title: {
+            text: '课程状态分布',
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b}: {c} ({d}%)'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 'left'
+        },
+                    series: [{
+                name: '课程状态',
+                type: 'pie',
+                radius: '50%',
+                data: [
+                    {value: statsData.active_course_count, name: '进行中'},
+                    {value: statsData.ended_course_count, name: '已结束'},
+                    {value: statsData.pending_course_count, name: '待审核'},
+                    {value: statsData.rejected_course_count, name: '已拒绝'}
+                ]
+            }]
+    });
+    
+    // 月度增长趋势
+    var trendChart = echarts.init(document.getElementById('trendChart'));
+    trendChart.setOption({
+        title: {
+            text: '月度增长趋势',
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'axis'
+        },
+        legend: {
+            data: ['学校', '学院', '教师', '课程']
+        },
+        xAxis: {
+            type: 'category',
+            data: ['1月', '2月', '3月', '4月', '5月', '6月']
+        },
+        yAxis: {
+            type: 'value'
+        },
+        series: [
+            {
+                name: '学校',
+                type: 'line',
+                data: [10, 15, 20, 25, 30, 35],
+                smooth: true,
+                itemStyle: {color: '#409EFF'}
+            },
+            {
+                name: '学院',
+                type: 'line',
+                data: [50, 80, 120, 160, 200, 240],
+                smooth: true,
+                itemStyle: {color: '#67C23A'}
+            },
+            {
+                name: '教师',
+                type: 'line',
+                data: [200, 350, 500, 650, 800, 950],
+                smooth: true,
+                itemStyle: {color: '#E6A23C'}
+            },
+            {
+                name: '课程',
+                type: 'line',
+                data: [100, 180, 260, 340, 420, 500],
+                smooth: true,
+                itemStyle: {color: '#F56C6C'}
+            }
+        ]
+    });
+    
+    // 响应式处理
+    window.addEventListener('resize', function() {
+        schoolChart.resize();
+        teacherChart.resize();
+        courseChart.resize();
+        trendChart.resize();
+    });
+});
+</script>
+{/block} 

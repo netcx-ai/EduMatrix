@@ -1,0 +1,481 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <div class="layui-row">
+                <div class="layui-col-md6">
+                    <h3>AI工具管理</h3>
+                </div>
+                <div class="layui-col-md6" style="text-align: right;">
+                    <button class="layui-btn layui-btn-sm" id="addAiTool">
+                        <i class="layui-icon layui-icon-add-1"></i> 添加工具
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="layui-card-body">
+            <!-- 搜索栏 -->
+            <div class="layui-form layui-form-pane" style="margin-bottom: 15px;">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">工具名称</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="name" placeholder="请输入工具名称" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">工具分类</label>
+                        <div class="layui-input-inline">
+                            <select name="category">
+                                <option value="">全部分类</option>
+                                <option value="content">内容生成</option>
+                                <option value="analysis">分析</option>
+                                <option value="assessment">评估</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">状态</label>
+                        <div class="layui-input-inline">
+                            <select name="status">
+                                <option value="">全部状态</option>
+                                <option value="1">启用</option>
+                                <option value="0">禁用</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn" lay-submit lay-filter="searchForm">
+                            <i class="layui-icon layui-icon-search"></i> 搜索
+                        </button>
+                        <button class="layui-btn layui-btn-primary" id="resetSearch">重置</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <table id="aiToolTable" lay-filter="aiToolTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 添加/编辑AI工具弹窗 -->
+<script type="text/html" id="aiToolFormTpl">
+    <form class="layui-form" lay-filter="aiToolForm" style="padding: 20px;">
+        <input type="hidden" name="id" value="">
+        <div class="layui-form-item">
+            <label class="layui-form-label">工具名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" required lay-verify="required" placeholder="请输入工具名称" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">工具编码</label>
+            <div class="layui-input-block">
+                <input type="text" name="code" required lay-verify="required" placeholder="请输入工具编码" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">工具分类</label>
+            <div class="layui-input-block">
+                <select name="category" required lay-verify="required">
+                    <option value="">请选择工具分类</option>
+                    <option value="content">内容生成</option>
+                    <option value="analysis">分析</option>
+                    <option value="assessment">评估</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">AI提供商</label>
+            <div class="layui-input-block">
+                <select name="provider" required lay-verify="required">
+                    <option value="">请选择AI提供商</option>
+                    <option value="deepseek">DeepSeek</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="mock">Mock(测试)</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">API密钥</label>
+            <div class="layui-input-block">
+                <input type="text" name="api_key" placeholder="请输入API密钥" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">API地址</label>
+            <div class="layui-input-block">
+                <input type="text" name="api_url" placeholder="请输入API地址" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">模型名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="model" placeholder="请输入模型名称，如：deepseek-chat" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">最大Token</label>
+            <div class="layui-input-block">
+                <input type="number" name="max_tokens" placeholder="请输入最大Token数，如：2000" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">温度参数</label>
+            <div class="layui-input-block">
+                <input type="number" name="temperature" step="0.1" placeholder="请输入温度参数，如：0.7" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="1" title="启用" checked>
+                <input type="radio" name="status" value="0" title="禁用">
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">工具描述</label>
+            <div class="layui-input-block">
+                <textarea name="description" placeholder="请输入工具描述" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">提示词模板</label>
+            <div class="layui-input-block">
+                <textarea name="prompt_template" placeholder="请输入提示词模板，可使用{参数名}作为占位符" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">系统提示词</label>
+            <div class="layui-input-block">
+                <textarea name="system_prompt" placeholder="请输入系统提示词" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">输出格式配置</label>
+            <div class="layui-input-block">
+                <textarea name="output_format" placeholder="请输入JSON格式的输出格式配置" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">输入参数配置</label>
+            <div class="layui-input-block">
+                <textarea name="input_params" placeholder="请输入JSON格式的输入参数配置" class="layui-textarea"></textarea>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="submitAiTool">确定</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+</script>
+
+<!-- 表格操作按钮 -->
+<script type="text/html" id="aiToolTableBar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="view">查看</a>
+    {{# if(d.status == 1){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="disable">禁用</a>
+    {{# } else { }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+</script>
+
+<!-- 状态显示 -->
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 1){ }}
+    <span class="layui-badge layui-bg-green">启用</span>
+    {{# } else { }}
+    <span class="layui-badge layui-bg-red">禁用</span>
+    {{# } }}
+</script>
+
+<!-- 分类显示 -->
+<script type="text/html" id="categoryTpl">
+    {{# if(d.category === 'content'){ }}
+    <span class="layui-badge layui-bg-blue">内容生成</span>
+    {{# } else if(d.category === 'analysis'){ }}
+    <span class="layui-badge layui-bg-green">分析</span>
+    {{# } else if(d.category === 'assessment'){ }}
+    <span class="layui-badge layui-bg-purple">评估</span>
+    {{# } else { }}
+    <span class="layui-badge layui-bg-gray">其他</span>
+    {{# } }}
+</script>
+{/block}
+
+{block name="script"}
+<script>
+layui.use(['table', 'form', 'layer'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    
+    // 渲染表格
+    var tableIns = table.render({
+        elem: '#aiToolTable',
+        url: '/admin/ai_tool/index',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'name', title: '工具名称', width: 200},
+            {field: 'code', title: '工具编码', width: 150},
+            {field: 'category', title: '分类', width: 120, templet: '#categoryTpl'},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {field: 'usage_count', title: '使用次数', width: 100, align: 'center'},
+            {field: 'usage_limit', title: '使用限制', width: 100, align: 'center'},
+            {field: 'price', title: '价格', width: 100, align: 'center'},
+            {field: 'last_used_time', title: '最后使用', width: 180},
+            {field: 'create_time', title: '创建时间', width: 180},
+            {title: '操作', width: 280, align: 'center', toolbar: '#aiToolTableBar'}
+        ]],
+        limits: [10, 20, 50, 100],
+        limit: 20
+    });
+    
+    // 搜索功能
+    form.on('submit(searchForm)', function(data){
+        tableIns.reload({
+            where: data.field,
+            page: {curr: 1}
+        });
+        return false;
+    });
+    
+    // 重置搜索
+    $('#resetSearch').on('click', function(){
+        $('input[name="name"]').val('');
+        $('select[name="type"]').val('');
+        $('select[name="status"]').val('');
+        form.render('select');
+        tableIns.reload({
+            where: {},
+            page: {curr: 1}
+        });
+    });
+    
+    // 添加AI工具
+    $('#addAiTool').on('click', function(){
+        showAiToolForm();
+    });
+    
+    // 监听工具条
+    table.on('tool(aiToolTable)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'edit'){
+            showAiToolForm(data);
+        } else if(obj.event === 'view'){
+            showAiToolDetail(data);
+        } else if(obj.event === 'config'){
+            showAiToolConfig(data);
+        } else if(obj.event === 'enable'){
+            enableAiTool(data);
+        } else if(obj.event === 'disable'){
+            disableAiTool(data);
+        } else if(obj.event === 'del'){
+            deleteAiTool(data);
+        }
+    });
+    
+    // 显示AI工具表单
+    function showAiToolForm(data){
+        var title = data ? '编辑AI工具' : '添加AI工具';
+        layer.open({
+            type: 1,
+            title: title,
+            area: ['800px', '700px'],
+            content: $('#aiToolFormTpl').html(),
+            success: function(layero, index){
+                form.render();
+                if(data){
+                    // 处理API配置数据
+                    var formData = {
+                        id: data.id,
+                        name: data.name,
+                        code: data.code,
+                        category: data.category,
+                        description: data.description,
+                        prompt_template: data.prompt_template,
+                        status: data.status
+                    };
+                    
+                    // 处理api_config字段
+                    if(data.api_config && typeof data.api_config === 'object'){
+                        formData.provider = data.api_config.provider || '';
+                        formData.api_key = data.api_config.api_key || '';
+                        formData.api_url = data.api_config.api_url || '';
+                        formData.model = data.api_config.model || '';
+                        formData.max_tokens = data.api_config.max_tokens || '';
+                        formData.temperature = data.api_config.temperature || '';
+                        formData.system_prompt = data.api_config.system_prompt || '';
+                        formData.output_format = data.api_config.output_format ? JSON.stringify(data.api_config.output_format, null, 2) : '';
+                        formData.input_params = data.api_config.input_params ? JSON.stringify(data.api_config.input_params, null, 2) : '';
+                    }
+                    
+                    form.val('aiToolForm', formData);
+                }
+            }
+        });
+    }
+    
+    // 显示AI工具详情
+    function showAiToolDetail(data){
+        var apiConfig = data.api_config || {};
+        layer.open({
+            type: 1,
+            title: 'AI工具详情',
+            area: ['700px', '600px'],
+            content: '<div style="padding: 20px;">' +
+                '<table class="layui-table" lay-skin="line">' +
+                '<tr><td>工具名称</td><td>' + data.name + '</td></tr>' +
+                '<tr><td>工具编码</td><td>' + data.code + '</td></tr>' +
+                '<tr><td>工具分类</td><td>' + getCategoryText(data.category) + '</td></tr>' +
+                '<tr><td>AI提供商</td><td>' + (apiConfig.provider || '-') + '</td></tr>' +
+                '<tr><td>模型名称</td><td>' + (apiConfig.model || '-') + '</td></tr>' +
+                '<tr><td>API地址</td><td>' + (apiConfig.api_url || '-') + '</td></tr>' +
+                '<tr><td>状态</td><td>' + getStatusText(data.status) + '</td></tr>' +
+                '<tr><td>使用次数</td><td>' + (data.usage_count || 0) + '</td></tr>' +
+                '<tr><td>最大Token</td><td>' + (apiConfig.max_tokens || '-') + '</td></tr>' +
+                '<tr><td>温度参数</td><td>' + (apiConfig.temperature || '-') + '</td></tr>' +
+                '<tr><td>创建时间</td><td>' + data.create_time + '</td></tr>' +
+                '<tr><td>工具描述</td><td>' + (data.description || '-') + '</td></tr>' +
+                '<tr><td>提示词模板</td><td>' + (data.prompt_template || '-') + '</td></tr>' +
+                '</table></div>'
+        });
+    }
+    
+    // 显示AI工具配置
+    function showAiToolConfig(data){
+        layer.open({
+            type: 1,
+            title: 'AI工具配置',
+            area: ['600px', '500px'],
+            content: '<div style="padding: 20px;">' +
+                '<form class="layui-form" lay-filter="configForm">' +
+                '<div class="layui-form-item">' +
+                '<label class="layui-form-label">API密钥</label>' +
+                '<div class="layui-input-block">' +
+                '<input type="text" name="api_key" value="' + data.api_key + '" class="layui-input">' +
+                '</div>' +
+                '</div>' +
+                '<div class="layui-form-item">' +
+                '<label class="layui-form-label">API地址</label>' +
+                '<div class="layui-input-block">' +
+                '<input type="text" name="api_url" value="' + data.api_url + '" class="layui-input">' +
+                '</div>' +
+                '</div>' +
+                '<div class="layui-form-item">' +
+                '<label class="layui-form-label">配置参数</label>' +
+                '<div class="layui-input-block">' +
+                '<textarea name="config" class="layui-textarea">' + (data.config || '') + '</textarea>' +
+                '</div>' +
+                '</div>' +
+                '<div class="layui-form-item">' +
+                '<div class="layui-input-block">' +
+                '<button class="layui-btn" lay-submit lay-filter="submitConfig">保存配置</button>' +
+                '</div>' +
+                '</div>' +
+                '</form></div>',
+            success: function(layero, index){
+                form.render();
+            }
+        });
+    }
+    
+    // 启用AI工具
+    function enableAiTool(data){
+        layer.confirm('确定要启用工具"' + data.name + '"吗？', function(index){
+            $.post('/admin/ai_tool/enable', {id: data.id}, function(res){
+                if(res.code === 1){
+                    layer.msg('启用成功', {icon: 1});
+                    tableIns.reload();
+                } else {
+                    layer.msg(res.msg || '启用失败', {icon: 2});
+                }
+            });
+            layer.close(index);
+        });
+    }
+    
+    // 停用AI工具
+    function disableAiTool(data){
+        layer.confirm('确定要停用工具"' + data.name + '"吗？', function(index){
+            $.post('/admin/ai_tool/disable', {id: data.id}, function(res){
+                if(res.code === 1){
+                    layer.msg('停用成功', {icon: 1});
+                    tableIns.reload();
+                } else {
+                    layer.msg(res.msg || '停用失败', {icon: 2});
+                }
+            });
+            layer.close(index);
+        });
+    }
+    
+    // 删除AI工具
+    function deleteAiTool(data){
+        layer.confirm('确定要删除工具"' + data.name + '"吗？此操作不可恢复！', function(index){
+            $.post('/admin/ai_tool/delete', {id: data.id}, function(res){
+                if(res.code === 1){
+                    layer.msg('删除成功', {icon: 1});
+                    tableIns.reload();
+                } else {
+                    layer.msg(res.msg || '删除失败', {icon: 2});
+                }
+            });
+            layer.close(index);
+        });
+    }
+    
+    // 提交表单
+    form.on('submit(submitAiTool)', function(data){
+        var url = data.field.id ? '/admin/ai_tool/update' : '/admin/ai_tool/add';
+        $.post(url, data.field, function(res){
+            if(res.code === 1){
+                layer.msg('操作成功', {icon: 1});
+                layer.closeAll('page');
+                tableIns.reload();
+            } else {
+                layer.msg(res.msg || '操作失败', {icon: 2});
+            }
+        });
+        return false;
+    });
+    
+    // 提交配置
+    form.on('submit(submitConfig)', function(data){
+        $.post('/admin/ai_tool/updateConfig', data.field, function(res){
+            if(res.code === 1){
+                layer.msg('配置保存成功', {icon: 1});
+                layer.closeAll('page');
+                tableIns.reload();
+            } else {
+                layer.msg(res.msg || '配置保存失败', {icon: 2});
+            }
+        });
+        return false;
+    });
+    
+    // 获取状态文本
+    function getStatusText(status){
+        return status == 1 ? '启用' : '禁用';
+    }
+    
+    // 获取分类文本
+    function getCategoryText(category){
+        var categoryMap = {
+            'content': '内容生成',
+            'analysis': '分析',
+            'assessment': '评估'
+        };
+        return categoryMap[category] || '未知';
+    }
+});
+</script>
+{/block} 

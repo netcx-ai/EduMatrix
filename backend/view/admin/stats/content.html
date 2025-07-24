@@ -1,0 +1,250 @@
+{extend name="common/base" /}
+
+{block name="title"}内容统计{/block}
+
+{block name="content"}
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <span class="layui-badge layui-bg-blue">内容统计</span>
+                </div>
+                <div class="layui-card-body">
+                    <!-- 筛选条件 -->
+                    <form class="layui-form" lay-filter="searchForm">
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <label class="layui-form-label">统计类型</label>
+                                <div class="layui-input-inline">
+                                    <select name="type">
+                                        <option value="category">分类统计</option>
+                                        <option value="tag">标签统计</option>
+                                        <option value="author">作者统计</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <button class="layui-btn" lay-submit lay-filter="search">
+                                    <i class="layui-icon layui-icon-search"></i> 查询
+                                </button>
+                                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- 统计图表 -->
+                    <div id="contentStatsChart" style="height: 400px; margin-top: 20px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+layui.use(['form', 'layer'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+    var contentStatsChart = null;
+    
+    // 监听搜索
+    form.on('submit(search)', function(data){
+        loadContentStats(data.field);
+        return false;
+    });
+    
+    // 加载内容统计数据
+    function loadContentStats(params) {
+        var loadIndex = layer.load(1);
+        
+        $.get('/admin/stats/content', params, function(res){
+            layer.close(loadIndex);
+            if(res.code == 0){
+                renderContentStatsChart(res.data, params.type);
+            } else {
+                layer.msg(res.msg, {icon: 2});
+            }
+        }).fail(function(){
+            layer.close(loadIndex);
+            layer.msg('请求失败，请重试', {icon: 2});
+        });
+    }
+    
+    // 渲染内容统计图表
+    function renderContentStatsChart(data, type) {
+        if (!contentStatsChart) {
+            contentStatsChart = echarts.init(document.getElementById('contentStatsChart'));
+        }
+        
+        var option = {};
+        
+        switch(type) {
+            case 'category':
+                option = {
+                    title: {
+                        text: '文章分类分布',
+                        left: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} 篇 ({d}%)'
+                    },
+                    series: [{
+                        name: '文章数量',
+                        type: 'pie',
+                        radius: '50%',
+                        data: data.map(item => ({
+                            name: item.name,
+                            value: item.count
+                        })),
+                        label: {
+                            show: true,
+                            formatter: '{d}%'
+                        },
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }]
+                };
+                break;
+                
+            case 'tag':
+                option = {
+                    title: {
+                        text: '文章标签分布',
+                        left: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        },
+                        formatter: function(params) {
+                            var total = data.reduce(function(sum, item) {
+                                return sum + item.count;
+                            }, 0);
+                            var percentage = ((params[0].value / total) * 100).toFixed(1);
+                            return params[0].name + '<br/>文章数量: ' + params[0].value + ' (' + percentage + '%)';
+                        }
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.map(item => item.name),
+                        axisLabel: {
+                            rotate: 45
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '文章数量'
+                    },
+                    series: [{
+                        name: '文章数量',
+                        type: 'bar',
+                        data: data.map(item => item.count),
+                        itemStyle: {
+                            color: '#E6A23C'
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function(params) {
+                                var total = data.reduce(function(sum, item) {
+                                    return sum + item.count;
+                                }, 0);
+                                var percentage = ((params.value / total) * 100).toFixed(1);
+                                return params.value + '\n(' + percentage + '%)';
+                            }
+                        }
+                    }]
+                };
+                break;
+                
+            case 'author':
+                option = {
+                    title: {
+                        text: '作者发文统计',
+                        left: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        },
+                        formatter: function(params) {
+                            var total = data.reduce(function(sum, item) {
+                                return sum + item.count;
+                            }, 0);
+                            var percentage = ((params[0].value / total) * 100).toFixed(1);
+                            return params[0].name + '<br/>文章数量: ' + params[0].value + ' (' + percentage + '%)';
+                        }
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.map(item => item.name),
+                        axisLabel: {
+                            rotate: 45
+                        }
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '文章数量'
+                    },
+                    series: [{
+                        name: '文章数量',
+                        type: 'bar',
+                        data: data.map(item => item.count),
+                        itemStyle: {
+                            color: '#F56C6C'
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function(params) {
+                                var total = data.reduce(function(sum, item) {
+                                    return sum + item.count;
+                                }, 0);
+                                var percentage = ((params.value / total) * 100).toFixed(1);
+                                return params.value + '\n(' + percentage + '%)';
+                            }
+                        }
+                    }]
+                };
+                break;
+                
+            default:
+                option = {
+                    title: {
+                        text: '暂无数据',
+                        left: 'center',
+                        top: 'center',
+                        textStyle: {
+                            color: '#999',
+                            fontSize: 16
+                        }
+                    }
+                };
+        }
+        
+        contentStatsChart.setOption(option);
+        
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            contentStatsChart.resize();
+        });
+    }
+    
+    // 页面加载时显示默认数据
+    loadContentStats({
+        type: 'category'
+    });
+});
+</script>
+{/block} 

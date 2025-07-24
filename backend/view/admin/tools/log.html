@@ -1,0 +1,332 @@
+{extend name="common/base" /}
+
+{block name="title"}日志查看{/block}
+
+{block name="content"}
+<div class="layui-fluid">
+    <!-- 统计卡片 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-file" style="color: #1E9FFF;"></i>
+                    总日志数
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="totalLogs">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-close" style="color: #FF5722;"></i>
+                    错误日志
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="errorCount">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-help" style="color: #FFB800;"></i>
+                    警告日志
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="warningCount">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-ok" style="color: #5FB878;"></i>
+                    信息日志
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="infoCount">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-database" style="color: #409EFF;"></i>
+                    SQL日志
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="sqlCount">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md2">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-debug" style="color: #9F7AEA;"></i>
+                    调试日志
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="debugCount">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <span class="layui-badge layui-bg-blue">日志查看</span>
+                    <div class="layui-btn-group" style="float: right;">
+                        <button class="layui-btn layui-btn-sm" id="exportBtn">
+                            <i class="layui-icon layui-icon-export"></i> 导出
+                        </button>
+                        <button class="layui-btn layui-btn-sm layui-btn-warm" id="clearBtn">
+                            <i class="layui-icon layui-icon-delete"></i> 清理
+                        </button>
+                        <button class="layui-btn layui-btn-sm layui-btn-normal" id="refreshBtn">
+                            <i class="layui-icon layui-icon-refresh"></i> 刷新
+                        </button>
+                    </div>
+                </div>
+                <div class="layui-card-body">
+                    <!-- 筛选条件 -->
+                    <form class="layui-form" lay-filter="searchForm">
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <label class="layui-form-label">日志级别</label>
+                                <div class="layui-input-inline">
+                                    <select name="level">
+                                        <option value="">全部级别</option>
+                                        <option value="ERROR">错误</option>
+                                        <option value="WARNING">警告</option>
+                                        <option value="INFO">信息</option>
+                                        <option value="DEBUG">调试</option>
+                                        <option value="SQL">SQL</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">日期</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="date" id="logDate" placeholder="请选择日期" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">关键词</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="keyword" placeholder="搜索日志内容" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <label class="layui-form-label">时间范围</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="start_time" id="startTime" placeholder="开始时间" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">至</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="end_time" id="endTime" placeholder="结束时间" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <button class="layui-btn" lay-submit lay-filter="search">
+                                    <i class="layui-icon layui-icon-search"></i> 查询
+                                </button>
+                                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- 日志表格 -->
+                    <table id="logTable" lay-filter="logTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script>
+layui.use(['table', 'form', 'layer', 'laydate'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    var laydate = layui.laydate;
+    
+    // 日期选择器
+    laydate.render({
+        elem: '#logDate',
+        type: 'date',
+        value: new Date().toISOString().split('T')[0]
+    });
+    
+    // 时间选择器
+    laydate.render({
+        elem: '#startTime',
+        type: 'datetime',
+        format: 'yyyy-MM-dd HH:mm:ss'
+    });
+    
+    laydate.render({
+        elem: '#endTime',
+        type: 'datetime',
+        format: 'yyyy-MM-dd HH:mm:ss'
+    });
+    
+    // 初始化表格
+    var tableIns = table.render({
+        elem: '#logTable',
+        url: '/admin/tools/log',
+        method: 'get',
+        where: {
+            date: new Date().toISOString().split('T')[0]
+        },
+        page: true,
+        limit: 20,
+        limits: [10, 20, 50, 100],
+        cols: [[
+            {field: 'time', title: '时间', width: 180},
+            {field: 'level', title: '级别', width: 100, templet: function(d){
+                var colors = {
+                    'ERROR': 'layui-bg-red',
+                    'WARNING': 'layui-bg-orange',
+                    'INFO': 'layui-bg-green',
+                    'DEBUG': 'layui-bg-gray',
+                    'SQL': 'layui-bg-blue'
+                };
+                return '<span class="layui-badge ' + (colors[d.level] || 'layui-bg-gray') + '">' + d.level + '</span>';
+            }},
+            {field: 'message', title: '日志内容'},
+            {field: 'file', title: '文件', width: 120}
+        ]],
+        parseData: function(res){
+            return {
+                "code": res.code,
+                "msg": res.msg,
+                "count": res.count,
+                "data": res.data
+            };
+        }
+    });
+    
+    // 监听搜索
+    form.on('submit(search)', function(data){
+        tableIns.reload({
+            where: data.field,
+            page: {
+                curr: 1
+            }
+        });
+        return false;
+    });
+    
+    // 导出日志
+    $('#exportBtn').click(function(){
+        var searchData = form.val('searchForm');
+        var params = new URLSearchParams(searchData);
+        window.open('/admin/tools/exportLog?' + params.toString());
+    });
+    
+    // 清理日志
+    $('#clearBtn').click(function(){
+        // 显示清理选项
+        layer.open({
+            type: 1,
+            title: '清理日志',
+            area: ['400px', '300px'],
+            content: `
+                <div style="padding: 20px;">
+                    <p style="margin-bottom: 15px; color: #666;">请选择要清理的日志时间范围：</p>
+                    <div style="margin-bottom: 15px;">
+                        <input type="radio" name="clearDays" value="7" id="clear7" checked>
+                        <label for="clear7">清理7天前的日志</label>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <input type="radio" name="clearDays" value="15" id="clear15">
+                        <label for="clear15">清理15天前的日志</label>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <input type="radio" name="clearDays" value="30" id="clear30">
+                        <label for="clear30">清理30天前的日志</label>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <input type="radio" name="clearDays" value="all" id="clearAll">
+                        <label for="clearAll" style="color: #FF5722;">清理所有日志（危险操作）</label>
+                    </div>
+                    <div style="margin-top: 20px; padding: 10px; background: #f8f8f8; border-radius: 4px;">
+                        <small style="color: #999;">
+                            <i class="layui-icon layui-icon-help"></i>
+                            注意：清理操作不可恢复，请谨慎选择
+                        </small>
+                    </div>
+                </div>
+            `,
+            btn: ['确定清理', '取消'],
+            yes: function(index, layero){
+                var selectedDays = layero.find('input[name="clearDays"]:checked').val();
+                var days = selectedDays === 'all' ? 0 : parseInt(selectedDays);
+                var confirmMsg = selectedDays === 'all' ? 
+                    '确定要清理所有日志吗？此操作不可恢复！' : 
+                    `确定要清理${days}天前的日志吗？`;
+                
+                layer.confirm(confirmMsg, {
+                    title: '最终确认',
+                    icon: 3,
+                    btn: ['确定', '取消']
+                }, function(confirmIndex){
+                    // 显示加载提示
+                    var loadIndex = layer.load(1, {shade: [0.3, '#000']});
+                    
+                    $.post('/admin/tools/clearLog', {days: days}, function(res){
+                        layer.close(loadIndex);
+                        if(res.code === 0){
+                            layer.msg(res.msg, {icon: 1, time: 2000});
+                            // 刷新表格和统计
+                            tableIns.reload();
+                            loadStats();
+                        } else {
+                            layer.msg(res.msg, {icon: 2, time: 3000});
+                        }
+                    }).fail(function(xhr, status, error) {
+                        layer.close(loadIndex);
+                        layer.msg('网络请求失败：' + error, {icon: 2, time: 3000});
+                    });
+                    layer.close(confirmIndex);
+                });
+                layer.close(index);
+            }
+        });
+    });
+    
+    // 刷新
+    $('#refreshBtn').click(function(){
+        tableIns.reload();
+        loadStats();
+    });
+    
+    // 加载统计
+    function loadStats() {
+        $.get('/admin/tools/logStats', function(res){
+            if(res.code === 0){
+                $('#totalLogs').text(res.data.total_logs);
+                $('#errorCount').text(res.data.error_count);
+                $('#warningCount').text(res.data.warning_count);
+                $('#infoCount').text(res.data.info_count);
+                $('#sqlCount').text(res.data.sql_count);
+                $('#debugCount').text(res.data.debug_count);
+            }
+        });
+    }
+    
+    // 页面加载时获取统计
+    loadStats();
+});
+</script>
+{/block} 
