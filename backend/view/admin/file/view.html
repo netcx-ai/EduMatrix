@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>文件详情</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+</head>
+<body style="padding: 15px;">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <h2 style="margin: 0;">文件详情</h2>
+            <div style="float:right;">
+                <button class="layui-btn layui-btn-normal layui-btn-sm" onclick="downloadFile({$file.id})">
+                    <i class="layui-icon layui-icon-download-circle"></i> 下载
+                </button>
+                <button class="layui-btn layui-btn-warm layui-btn-sm" onclick="editFile({$file.id})">
+                    <i class="layui-icon layui-icon-edit"></i> 编辑
+                </button>
+                <button class="layui-btn layui-btn-danger layui-btn-sm" onclick="deleteFile({$file.id})">
+                    <i class="layui-icon layui-icon-delete"></i> 删除
+                </button>
+            </div>
+            <div style="clear: both;"></div>
+        </div>
+        <div class="layui-card-body">
+            <table class="layui-table">
+                <tbody>
+                    <tr>
+                        <td>文件名称</td>
+                        <td>{$file.file_name|default='-'}</td>
+                        <td>原始名称</td>
+                        <td>{$file.original_name|default='-'}</td>
+                    </tr>
+                    <tr>
+                        <td>文件类型</td>
+                        <td>
+                            {if condition="$file.file_category == 'document'"}
+                                <span class="layui-badge layui-bg-blue">文档</span>
+                            {elseif condition="$file.file_category == 'image'"}
+                                <span class="layui-badge layui-bg-green">图片</span>
+                            {elseif condition="$file.file_category == 'video'"}
+                                <span class="layui-badge layui-bg-orange">视频</span>
+                            {elseif condition="$file.file_category == 'audio'"}
+                                <span class="layui-badge layui-bg-purple">音频</span>
+                            {else/}
+                                <span class="layui-badge layui-bg-gray">其他</span>
+                            {/if}
+                        </td>
+                        <td>文件扩展名</td>
+                        <td>{$file.file_type|default='-'}</td>
+                    </tr>
+                    <tr>
+                        <td>MIME类型</td>
+                        <td>{$file.mime_type|default='-'}</td>
+                        <td>文件大小</td>
+                        <td>{$file.file_size_text|default='-'}</td>
+                    </tr>
+                    <tr>
+                        <td>存储类型</td>
+                        <td>
+                            {if condition="$file.storage_type == 'local'"}
+                                <span class="layui-badge layui-bg-blue">本地存储</span>
+                            {elseif condition="$file.storage_type == 'oss'"}
+                                <span class="layui-badge layui-bg-green">阿里云OSS</span>
+                            {elseif condition="$file.storage_type == 'cos'"}
+                                <span class="layui-badge layui-bg-orange">腾讯云COS</span>
+                            {else/}
+                                <span class="layui-badge layui-bg-gray">未知</span>
+                            {/if}
+                        </td>
+                        <td>上传者</td>
+                        <td>{$file.uploader_name|default='-'}</td>
+                    </tr>
+                    <tr>
+                        <td>所属学校</td>
+                        <td>{$file.school_name|default='-'}</td>
+                        <td>下载次数</td>
+                        <td>{$file.download_count|default=0}</td>
+                    </tr>
+                    <tr>
+                        <td>查看次数</td>
+                        <td>{$file.view_count|default=0}</td>
+                        <td>文件状态</td>
+                        <td>
+                            {if condition="$file.status == 1"}
+                                <span class="layui-badge layui-bg-green">正常</span>
+                            {else/}
+                                <span class="layui-badge layui-bg-red">已删除</span>
+                            {/if}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>创建时间</td>
+                        <td>{$file.create_time_text|default='-'}</td>
+                        <td>更新时间</td>
+                        <td>{$file.update_time_text|default='-'}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="4">文件预览</td>
+                    </tr>
+                    <tr>
+                        <td colspan="4">
+                            {if $file.file_category == 'image'}
+                                {if $file.file_url}
+                                <div style="text-align: center; padding: 20px;">
+                                    <img src="{$file.file_url}" style="max-width: 100%; max-height: 400px; border: 1px solid #e6e6e6;" alt="{$file.file_name|default='图片预览'}">
+                                </div>
+                                {else}
+                                <div style="text-align: center; color: #999; padding: 20px;">
+                                    <i class="layui-icon layui-icon-picture" style="font-size: 24px;"></i>
+                                    <p>暂无图片</p>
+                                </div>
+                                {/if}
+                            {elseif $file.file_category == 'video'}
+                                {if $file.file_url}
+                                <div style="text-align: center; padding: 20px;">
+                                    <video src="{$file.file_url}" controls style="max-width: 100%; max-height: 400px;"></video>
+                                </div>
+                                {else}
+                                <div style="text-align: center; color: #999; padding: 20px;">
+                                    <i class="layui-icon layui-icon-video" style="font-size: 24px;"></i>
+                                    <p>暂无视频</p>
+                                </div>
+                                {/if}
+                            {elseif $file.file_category == 'audio'}
+                                {if $file.file_url}
+                                <div style="text-align: center; padding: 20px;">
+                                    <audio src="{$file.file_url}" controls style="width: 100%;"></audio>
+                                </div>
+                                {else}
+                                <div style="text-align: center; color: #999; padding: 20px;">
+                                    <i class="layui-icon layui-icon-voice" style="font-size: 24px;"></i>
+                                    <p>暂无音频</p>
+                                </div>
+                                {/if}
+                            {else}
+                                <div style="text-align: center; color: #999; padding: 20px;">
+                                    <i class="layui-icon layui-icon-file" style="font-size: 24px;"></i>
+                                    <p>此文件类型不支持预览</p>
+                                    <button class="layui-btn layui-btn-normal" onclick="downloadFile({$file.id})">
+                                        <i class="layui-icon layui-icon-download-circle"></i> 下载查看
+                                    </button>
+                                </div>
+                            {/if}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="layui-form-item" style="margin-top: 20px; text-align: center;">
+        <button type="button" class="layui-btn layui-btn-primary" onclick="closeWindow()">关闭</button>
+    </div>
+
+    <script src="/static/admin/js/jquery-3.7.1.min.js"></script>
+    <script src="/static/layui/layui.js"></script>
+    <script>
+    layui.use(['layer'], function(){
+        var layer = layui.layer;
+        
+        window.closeWindow = function() {
+            var index = parent.layer.getFrameIndex(window.name);
+            parent.layer.close(index);
+        };
+        
+        // 下载文件
+        window.downloadFile = function(id){
+            window.open('/admin/file/download?id=' + id);
+        };
+        
+        // 编辑文件
+        window.editFile = function(id){
+            layer.prompt({
+                title: '编辑文件名',
+                value: '{$file.file_name}'
+            }, function(value, index){
+                $.ajax({
+                    url: '/admin/file/update/' + id,
+                    type: 'PUT',
+                    data: {file_name: value},
+                    success: function(res){
+                        if(res.code === 0){
+                            layer.msg('更新成功', {icon: 1}, function(){
+                                // 关闭弹窗并刷新父页面表格
+                                var frameIndex = parent.layer.getFrameIndex(window.name);
+                                parent.layer.close(frameIndex);
+                                if (parent.layui && parent.layui.table) {
+                                    parent.layui.table.reload('fileTable');
+                                }
+                            });
+                        } else {
+                            layer.msg(res.msg || '更新失败', {icon: 2});
+                        }
+                    }
+                });
+                layer.close(index);
+            });
+        };
+        
+        // 删除文件
+        window.deleteFile = function(id){
+            layer.confirm('确定要删除此文件吗？', function(index){
+                $.ajax({
+                    url: '/admin/file/destroy/' + id,
+                    type: 'DELETE',
+                    success: function(res){
+                        if(res.code === 0){
+                            layer.msg('删除成功', {icon: 1}, function(){
+                                // 关闭弹窗并刷新父页面表格
+                                var frameIndex = parent.layer.getFrameIndex(window.name);
+                                parent.layer.close(frameIndex);
+                                if (parent.layui && parent.layui.table) {
+                                    parent.layui.table.reload('fileTable');
+                                }
+                            });
+                        } else {
+                            layer.msg(res.msg || '删除失败', {icon: 2});
+                        }
+                    }
+                });
+                layer.close(index);
+            });
+        };
+    });
+    </script>
+</body>
+</html> 

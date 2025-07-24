@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>查看文章</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .article-container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .article-header {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .article-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .article-meta {
+            color: #666;
+            font-size: 14px;
+        }
+        .article-meta span {
+            margin-right: 20px;
+        }
+        .article-content {
+            line-height: 1.8;
+            color: #333;
+            font-size: 16px;
+        }
+        .article-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        .article-tags {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .tag-item {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 12px;
+            border-radius: 15px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #fff;
+        }
+        .status-draft { background: #999; }
+        .status-published { background: #5FB878; }
+        .status-unpublished { background: #FFB800; }
+    </style>
+</head>
+<body>
+    <div class="article-container">
+        <div class="article-header">
+            <h1 class="article-title">{$article.title}</h1>
+            <div class="article-meta">
+                <span><i class="layui-icon layui-icon-user"></i> 作者：{$article.author.real_name|default='未知'}</span>
+                <span><i class="layui-icon layui-icon-tabs"></i> 分类：{$article.category.name|default='未分类'}</span>
+                <span><i class="layui-icon layui-icon-time"></i> 发布时间：{$article.create_time}</span>
+                <span><i class="layui-icon layui-icon-eye"></i> 浏览量：{$article.view_count|default='0'}</span>
+                <span>
+                    <i class="layui-icon layui-icon-ok-circle"></i> 状态：
+                    {if $article.status == 0}
+                        <span class="status-badge status-draft">草稿</span>
+                    {elseif $article.status == 1}
+                        <span class="status-badge status-published">已发布</span>
+                    {elseif $article.status == 2}
+                        <span class="status-badge status-unpublished">已下架</span>
+                    {/if}
+                </span>
+                {if $article.is_top}
+                <span><i class="layui-icon layui-icon-top"></i> 置顶</span>
+                {/if}
+                {if $article.is_recommend}
+                <span><i class="layui-icon layui-icon-star"></i> 推荐</span>
+                {/if}
+            </div>
+        </div>
+        
+        {if $article.summary}
+        <div class="article-summary" style="background: #f9f9f9; padding: 15px; border-left: 4px solid #5FB878; margin-bottom: 20px;">
+            <strong>摘要：</strong>{$article.summary}
+        </div>
+        {/if}
+        
+        <div class="article-content">
+            {$article.content|raw}
+        </div>
+        
+        {if $article.tags}
+        <div class="article-tags">
+            <strong>标签：</strong>
+            {volist name="article.tags" id="tag"}
+            <span class="tag-item">{$tag.name}</span>
+            {/volist}
+        </div>
+        {/if}
+    </div>
+    
+    <script src="/static/layui/layui.js"></script>
+    <script>
+        layui.use(['layer'], function(){
+            var layer = layui.layer;
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>编辑职称</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+    <style>
+        body {
+            padding: 20px;
+            background-color: #fff;
+        }
+        .layui-form-label {
+            width: 100px;
+        }
+        .layui-input-block {
+            margin-left: 130px;
+        }
+        .layui-form-item {
+            margin-bottom: 20px;
+        }
+        .layui-form-label span {
+            color: #FF5722;
+            margin-right: 3px;
+        }
+        .layui-textarea {
+            min-height: 80px;
+        }
+        .form-container {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .layui-form-select dl {
+            max-height: 280px;
+        }
+        .submit-buttons {
+            padding-top: 10px;
+            border-top: 1px solid #e6e6e6;
+            margin-top: 20px;
+        }
+        /* 输入框获得焦点时的效果 */
+        .layui-input:focus,
+        .layui-textarea:focus {
+            border-color: #1E9FFF !important;
+        }
+        /* 单选按钮样式优化 */
+        .layui-form-radio {
+            margin-right: 15px;
+        }
+    </style>
+</head>
+<body>
+<div class="form-container">
+    <form class="layui-form" action="" lay-filter="titleForm">
+        <input type="hidden" name="id" value="{$title.id}">
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span>*</span>职称名称</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" value="{$title.name}" required lay-verify="required" placeholder="请输入职称名称，如：教授、副教授、讲师等" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span>*</span>职称代码</label>
+            <div class="layui-input-block">
+                <input type="text" name="code" value="{$title.code}" required lay-verify="required" placeholder="请输入职称代码，如：professor、lecturer等" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label">排序</label>
+            <div class="layui-input-block">
+                <input type="number" name="sort" value="{$title.sort}" placeholder="请输入排序值，数值越小越靠前" autocomplete="off" class="layui-input">
+            </div>
+        </div>
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label"><span>*</span>职称级别</label>
+            <div class="layui-input-block">
+                <select name="level" required lay-verify="required" id="levelSelect">
+                    <option value="">请选择职称级别</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">职称描述</label>
+            <div class="layui-input-block">
+                <textarea name="description" placeholder="请输入职称描述" class="layui-textarea">{$title.description}</textarea>
+            </div>
+        </div>
+        
+        <div class="layui-form-item">
+            <label class="layui-form-label">状态</label>
+            <div class="layui-input-block">
+                <input type="radio" name="status" value="1" title="启用" {if $title.status == 1}checked{/if}>
+                <input type="radio" name="status" value="0" title="禁用" {if $title.status == 0}checked{/if}>
+            </div>
+        </div>
+        
+        <div class="layui-form-item submit-buttons">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="titleSubmit">
+                    <i class="layui-icon layui-icon-ok"></i> 保存修改
+                </button>
+                <button type="button" class="layui-btn layui-btn-primary" onclick="parent.layer.closeAll()">
+                    <i class="layui-icon layui-icon-close"></i> 取消
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script src="/static/admin/js/jquery-3.7.1.min.js"></script>
+<script src="/static/layui/layui.js"></script>
+<script>
+layui.use(['form', 'layer'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = layui.$;
+    
+    // 动态加载级别选项
+    function loadLevelOptions() {
+        $.get('/admin/teacher_title/getLevelOptions', function(res) {
+            if (res.code === 0) {
+                var $levelSelect = $('#levelSelect');
+                $levelSelect.empty();
+                $levelSelect.append('<option value="">请选择职称级别</option>');
+                
+                // 按级别值倒序排列（5级到1级）
+                Object.keys(res.data).sort(function(a, b) {
+                    return parseInt(b) - parseInt(a);
+                }).forEach(function(level) {
+                    var selected = level == '{$title.level}' ? 'selected' : '';
+                    var levelData = res.data[level];
+                    var levelName = levelData.name;
+                    var examples = levelData.examples;
+                    
+                    $levelSelect.append('<option value="' + level + '" ' + selected + '>' + levelName + examples + '</option>');
+                });
+                form.render('select');
+            }
+        });
+    }
+    
+    // 页面加载完成后初始化级别选项
+    loadLevelOptions();
+    
+    // 监听提交
+    form.on('submit(titleSubmit)', function(data){
+        // 显示加载动画
+        var loadIndex = layer.load(2);
+        
+        $.ajax({
+            url: '/admin/teacher_title/update/' + data.field.id,
+            type: 'POST',
+            data: data.field,
+            dataType: 'json',
+            success: function(res) {
+                layer.close(loadIndex);
+                if (res.code === 0) {
+                    layer.msg('更新成功', {icon: 1, time: 1000}, function() {
+                        // 关闭弹窗并刷新父页面表格
+                        parent.layui.table.reload('titleTable');
+                        parent.layer.closeAll();
+                    });
+                } else {
+                    layer.msg(res.msg || '更新失败', {icon: 2});
+                }
+            },
+            error: function() {
+                layer.close(loadIndex);
+                layer.msg('网络错误', {icon: 2});
+            }
+        });
+        return false;
+    });
+});
+</script>
+</body>
+</html> 

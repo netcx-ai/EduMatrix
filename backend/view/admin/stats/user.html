@@ -1,0 +1,271 @@
+{extend name="common/base" /}
+
+{block name="title"}用户统计{/block}
+
+{block name="content"}
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <span class="layui-badge layui-bg-blue">用户统计</span>
+                </div>
+                <div class="layui-card-body">
+                    <!-- 筛选条件 -->
+                    <form class="layui-form" lay-filter="searchForm">
+                        <div class="layui-form-item">
+                            <div class="layui-inline">
+                                <label class="layui-form-label">统计类型</label>
+                                <div class="layui-input-inline">
+                                                                    <select name="type">
+                                    <option value="daily">按日统计</option>
+                                    <option value="monthly">按月统计</option>
+                                    <option value="gender">性别分布</option>
+                                    <option value="age">年龄分布</option>
+                                    <option value="member_level">会员等级分布</option>
+                                </select>
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">开始日期</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="start_date" id="startDate" placeholder="请选择开始日期" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <label class="layui-form-label">结束日期</label>
+                                <div class="layui-input-inline">
+                                    <input type="text" name="end_date" id="endDate" placeholder="请选择结束日期" autocomplete="off" class="layui-input">
+                                </div>
+                            </div>
+                            <div class="layui-inline">
+                                <button class="layui-btn" lay-submit lay-filter="search">
+                                    <i class="layui-icon layui-icon-search"></i> 查询
+                                </button>
+                                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- 统计图表 -->
+                    <div id="userStatsChart" style="height: 400px; margin-top: 20px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+layui.use(['form', 'layer', 'laydate'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+    var laydate = layui.laydate;
+    var userStatsChart = null;
+    
+    // 日期选择器
+    laydate.render({
+        elem: '#startDate',
+        type: 'date'
+    });
+    
+    laydate.render({
+        elem: '#endDate',
+        type: 'date'
+    });
+    
+    // 监听搜索
+    form.on('submit(search)', function(data){
+        loadUserStats(data.field);
+        return false;
+    });
+    
+    // 加载用户统计数据
+    function loadUserStats(params) {
+        var loadIndex = layer.load(1);
+        
+        $.get('/admin/stats/user', params, function(res){
+            layer.close(loadIndex);
+            if(res.code == 0){
+                renderUserStatsChart(res.data, params.type);
+            } else {
+                layer.msg(res.msg, {icon: 2});
+            }
+        }).fail(function(){
+            layer.close(loadIndex);
+            layer.msg('请求失败，请重试', {icon: 2});
+        });
+    }
+    
+    // 渲染用户统计图表
+    function renderUserStatsChart(data, type) {
+        if (!userStatsChart) {
+            userStatsChart = echarts.init(document.getElementById('userStatsChart'));
+        }
+        
+        var option = {};
+        
+        switch(type) {
+            case 'daily':
+            case 'monthly':
+                option = {
+                    title: {
+                        text: type === 'daily' ? '用户注册趋势（按日）' : '用户注册趋势（按月）',
+                        left: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.map(item => type === 'daily' ? item.date : item.month)
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '用户数量'
+                    },
+                    series: [{
+                        name: '注册用户数',
+                        type: 'line',
+                        data: data.map(item => item.count),
+                        smooth: true,
+                        itemStyle: {
+                            color: '#409EFF'
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [{
+                                    offset: 0, color: 'rgba(64,158,255,0.3)'
+                                }, {
+                                    offset: 1, color: 'rgba(64,158,255,0.1)'
+                                }]
+                            }
+                        }
+                    }]
+                };
+                break;
+                
+            case 'gender':
+                option = {
+                    title: {
+                        text: '用户性别分布',
+                        left: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)'
+                    },
+                    series: [{
+                        name: '性别分布',
+                        type: 'pie',
+                        radius: '50%',
+                        data: data.map(item => ({
+                            name: item.name,
+                            value: item.count
+                        })),
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }]
+                };
+                break;
+                
+            case 'age':
+                option = {
+                    title: {
+                        text: '用户年龄分布',
+                        left: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: {
+                            type: 'shadow'
+                        }
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.map(item => item.name)
+                    },
+                    yAxis: {
+                        type: 'value',
+                        name: '用户数量'
+                    },
+                    series: [{
+                        name: '用户数量',
+                        type: 'bar',
+                        data: data.map(item => item.count),
+                        itemStyle: {
+                            color: '#67C23A'
+                        }
+                    }]
+                };
+                break;
+                
+            case 'member_level':
+                option = {
+                    title: {
+                        text: '用户会员等级分布',
+                        left: 'center'
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)'
+                    },
+                    series: [{
+                        name: '会员等级分布',
+                        type: 'pie',
+                        radius: '50%',
+                        data: data.map(item => ({
+                            name: item.name,
+                            value: item.count
+                        })),
+                        emphasis: {
+                            itemStyle: {
+                                shadowBlur: 10,
+                                shadowOffsetX: 0,
+                                shadowColor: 'rgba(0, 0, 0, 0.5)'
+                            }
+                        }
+                    }]
+                };
+                break;
+                
+            default:
+                option = {
+                    title: {
+                        text: '暂无数据',
+                        left: 'center',
+                        top: 'center',
+                        textStyle: {
+                            color: '#999',
+                            fontSize: 16
+                        }
+                    }
+                };
+        }
+        
+        userStatsChart.setOption(option);
+        
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            userStatsChart.resize();
+        });
+    }
+    
+    // 页面加载时显示默认数据
+    loadUserStats({
+        type: 'daily',
+        start_date: '',
+        end_date: ''
+    });
+});
+</script>
+{/block} 

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>学院详情</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+</head>
+<body style="padding: 15px;">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <span class="layui-badge layui-bg-blue">学院详情</span>
+                    <div class="layui-btn-group" style="float:right;">
+                        <button class="layui-btn layui-btn-warm layui-btn-sm" onclick="editCollege({$college.id})">
+                            <i class="layui-icon">&#xe642;</i> 编辑
+                        </button>
+                        <button class="layui-btn layui-btn-danger layui-btn-sm" onclick="deleteCollege({$college.id})">
+                            <i class="layui-icon">&#xe640;</i> 删除
+                        </button>
+                    </div>
+                </div>
+                <div class="layui-card-body">
+                    <div class="layui-row layui-col-space15">
+                        <!-- 基本信息 -->
+                        <div class="layui-col-md6">
+                            <table class="layui-table" lay-skin="nob">
+                                <colgroup>
+                                    <col width="120">
+                                    <col>
+                                </colgroup>
+                                <tbody>
+                                    <tr>
+                                        <td>学院名称：</td>
+                                        <td>{$college.name|default='-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>学院编码：</td>
+                                        <td>{$college.code|default='-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>学院简称：</td>
+                                        <td>{$college.short_name|default='-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>所属学校：</td>
+                                        <td>{$college.school_name|default='-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>院长：</td>
+                                        <td>{$college.dean|default='-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>联系电话：</td>
+                                        <td>{$college.phone|default='-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>邮箱：</td>
+                                        <td>{$college.email|default='-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>地址：</td>
+                                        <td>{$college.address|default='-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>排序：</td>
+                                        <td>{$college.sort|default='0'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>状态：</td>
+                                        <td>
+                                            {switch $college.status}
+                                                {case 1}<span class="layui-badge layui-bg-green">启用</span>{/case}
+                                                {case 0}<span class="layui-badge">禁用</span>{/case}
+                                                {default}<span class="layui-badge layui-bg-gray">未知</span>{/default}
+                                            {/switch}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>创建时间：</td>
+                                        <td>{$college.create_time|default='-'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>更新时间：</td>
+                                        <td>{$college.update_time|default='-'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 统计信息 -->
+                        <div class="layui-col-md6">
+                            <div class="layui-card">
+                                <div class="layui-card-header">统计信息</div>
+                                <div class="layui-card-body">
+                                    <div class="layui-row layui-col-space10">
+                                        <div class="layui-col-md6">
+                                            <div class="layui-card">
+                                                <div class="layui-card-body" style="text-align: center;">
+                                                    <h3>{$college.teacher_count|default=0}</h3>
+                                                    <p>教师数量</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="layui-col-md6">
+                                            <div class="layui-card">
+                                                <div class="layui-card-body" style="text-align: center;">
+                                                    <h3>{$college.student_count|default=0}</h3>
+                                                    <p>学生数量</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="layui-row layui-col-space10" style="margin-top: 10px;">
+                                        <div class="layui-col-md6">
+                                            <div class="layui-card">
+                                                <div class="layui-card-body" style="text-align: center;">
+                                                    <h3>{$college.course_count|default=0}</h3>
+                                                    <p>课程数量</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="layui-col-md6">
+                                            <div class="layui-card">
+                                                <div class="layui-card-body" style="text-align: center;">
+                                                    <h3>{$college.active_course_count|default=0}</h3>
+                                                    <p>进行中课程</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 学院描述 -->
+                            <div class="layui-card" style="margin-top: 15px;">
+                                <div class="layui-card-header">学院描述</div>
+                                <div class="layui-card-body">
+                                    <p>{$college.description|default='暂无描述信息'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/layui/layui.js"></script>
+    <script>
+    layui.use(['layer'], function(){
+        var layer = layui.layer;
+        
+        // 编辑学院
+        window.editCollege = function(id){
+            layer.open({
+                type: 2,
+                title: '编辑学院',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['900px', '700px'],
+                content: '/admin/college/edit?id=' + id
+            });
+        };
+        
+        // 删除学院
+        window.deleteCollege = function(id){
+            layer.confirm('确定要删除此学院吗？', function(index){
+                $.post('/admin/college/delete', {id: id}, function(res){
+                    if(res.code === 0){
+                        layer.msg('删除成功', {icon: 1}, function(){
+                            // 关闭弹窗并刷新父页面表格
+                            var frameIndex = parent.layer.getFrameIndex(window.name);
+                            parent.layer.close(frameIndex);
+                            if (parent.layui && parent.layui.table) {
+                                parent.layui.table.reload('collegeTable');
+                            }
+                        });
+                    } else {
+                        layer.msg(res.message || '删除失败', {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        };
+    });
+    </script>
+</body>
+</html> 

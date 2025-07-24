@@ -1,0 +1,227 @@
+{extend name="common/base" /}
+
+{block name="title"}学校管理员{/block}
+
+{block name="content"}
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <span class="layui-badge layui-bg-blue">学校管理员管理</span>
+            <div class="layui-btn-group layui-hide-xs" style="float: right;">
+                <button class="layui-btn layui-btn-sm" id="addSchoolAdmin">
+                    <i class="layui-icon layui-icon-add-1"></i> 添加管理员
+                </button>
+            </div>
+        </div>
+        <div class="layui-card-body">
+            <!-- 搜索栏 -->
+            <form class="layui-form layui-form-pane" lay-filter="searchForm">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">管理员姓名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="keyword" placeholder="请输入管理员姓名" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">所属学校</label>
+                        <div class="layui-input-inline">
+                            <select name="school_id" id="schoolSelect">
+                                <option value="">全部学校</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">状态</label>
+                        <div class="layui-input-inline">
+                            <select name="status">
+                                <option value="">全部状态</option>
+                                <option value="1">正常</option>
+                                <option value="0">停用</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn" lay-submit lay-filter="searchForm">
+                            <i class="layui-icon layui-icon-search"></i> 搜索
+                        </button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- 数据表格 -->
+            <table id="schoolAdminTable" lay-filter="schoolAdminTable"></table>
+        </div>
+    </div>
+</div>
+
+<!-- 表格操作按钮 -->
+<script type="text/html" id="schoolAdminTableBar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="view">查看</a>
+    {{# if(d.status === 1){ }}
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="disable">停用</a>
+    {{# } else { }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+</script>
+
+<!-- 状态显示 -->
+<script type="text/html" id="statusTpl">
+    {{# if(d.status === 1){ }}
+    <span class="layui-badge layui-bg-green">正常</span>
+    {{# } else { }}
+    <span class="layui-badge layui-bg-gray">停用</span>
+    {{# } }}
+</script>
+
+<!-- 权限级别显示 -->
+<script type="text/html" id="permissionTpl">
+    {{# if(d.role === 'admin'){ }}
+    <span class="layui-badge layui-bg-blue">管理员</span>
+    {{# } else if(d.role === 'dean'){ }}
+    <span class="layui-badge layui-bg-orange">院长</span>
+    {{# } else if(d.role === 'director'){ }}
+    <span class="layui-badge layui-bg-gray">主任</span>
+    {{# } }}
+</script>
+{/block}
+
+{block name="script"}
+<script>
+layui.use(['table', 'form', 'layer'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    
+    // 渲染表格
+    var tableIns = table.render({
+        elem: '#schoolAdminTable',
+        url: '/admin/school_admin/index',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'real_name', title: '管理员姓名', width: 120},
+            {field: 'email', title: '邮箱', width: 200},
+            {field: 'phone', title: '联系电话', width: 150},
+            {field: 'school', title: '所属学校', width: 150, templet: function(d){ return d.school ? d.school.name : ''; }},
+            {field: 'role', title: '权限级别', width: 120, templet: '#permissionTpl'},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {field: 'last_login_time', title: '最后登录', width: 180},
+            {field: 'create_time', title: '创建时间', width: 180},
+            {title: '操作', width: 280, align: 'center', toolbar: '#schoolAdminTableBar'}
+        ]],
+        limits: [10, 20, 50, 100],
+        limit: 20,
+        height: 'full-220'
+    });
+    
+    // 搜索功能
+    form.on('submit(searchForm)', function(data){
+        tableIns.reload({
+            where: data.field,
+            page: {curr: 1}
+        });
+        return false;
+    });
+    
+    // 重置搜索
+    $('button[type="reset"]').click(function(){
+        tableIns.reload({
+            where: {},
+            page: {curr: 1}
+        });
+    });
+    
+    // 加载学校列表
+    function loadSchools(){
+        $.get('/admin/school/getAll', function(res){
+            if(res.code === 1){
+                var options = '<option value="">全部学校</option>';
+                res.data.forEach(function(school){
+                    options += '<option value="' + school.id + '">' + school.name + '</option>';
+                });
+                $('#schoolSelect').html(options);
+                form.render('select');
+            }
+        });
+    }
+    
+    // 监听工具条
+    table.on('tool(schoolAdminTable)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'edit'){
+            layer.open({
+                type: 2,
+                title: '编辑管理员',
+                area: ['800px', '600px'],
+                content: '/admin/school_admin/edit?id=' + data.id
+            });
+        } else if(obj.event === 'view'){
+            layer.open({
+                type: 2,
+                title: '查看管理员',
+                area: ['800px', '600px'],
+                content: '/admin/school_admin/detail?id=' + data.id
+            });
+        } else if(obj.event === 'enable'){
+            layer.confirm('确定要启用该管理员吗？', function(index){
+                $.post('/admin/school_admin/changeStatus', {id: data.id, status: 1}, function(res){
+                    if(res.code === 1){
+                        layer.msg('启用成功', {icon: 1});
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '启用失败', {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'disable'){
+            layer.confirm('确定要停用该管理员吗？', function(index){
+                $.post('/admin/school_admin/changeStatus', {id: data.id, status: 0}, function(res){
+                    if(res.code === 1){
+                        layer.msg('停用成功', {icon: 1});
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '停用失败', {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'del'){
+            layer.confirm('确定要删除该管理员吗？此操作不可恢复！', function(index){
+                $.post('/admin/school_admin/delete', {id: data.id}, function(res){
+                    if(res.code === 1){
+                        layer.msg('删除成功', {icon: 1});
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '删除失败', {icon: 2});
+                    }
+                });
+                layer.close(index);
+            });
+        }
+    });
+    
+    // 添加管理员
+    $('#addSchoolAdmin').click(function(){
+        layer.open({
+            type: 2,
+            title: '添加管理员',
+            area: ['800px', '600px'],
+            content: '/admin/school_admin/add'
+        });
+    });
+    
+    // 监听窗口大小变化，重新调整表格高度
+    $(window).on('resize', function(){
+        tableIns.resize();
+    });
+    
+    // 初始化加载学校列表
+    loadSchools();
+});
+</script>
+{/block} 

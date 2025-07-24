@@ -1,0 +1,163 @@
+{extend name="common/popup" /}
+
+{block name="title"}课程标签管理{/block}
+
+{block name="page_title"}课程标签管理 - {$course.name}{/block}
+
+{block name="content"}
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <div class="layui-form">
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">课程名称</label>
+                            <div class="layui-input-block">
+                                <input type="text" value="{$course.name}" class="layui-input" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">当前标签</label>
+                            <div class="layui-input-block">
+                                <div id="currentTags" style="min-height: 40px; padding: 10px; border: 1px solid #e6e6e6; border-radius: 2px;">
+                                    {if condition="$course.tags && count($course.tags) > 0"}
+                                        {volist name="course.tags" id="tag"}
+                                            <span class="layui-badge" style="background-color: {$tag.color}; margin-right: 5px; margin-bottom: 5px;">
+                                                {$tag.name}
+                                                <i class="layui-icon layui-icon-close" style="cursor: pointer;" onclick="removeTag({$tag.id})"></i>
+                                            </span>
+                                        {/volist}
+                                    {else/}
+                                        <span class="layui-text-color">暂无标签</span>
+                                    {/if}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">选择标签</label>
+                            <div class="layui-input-block">
+                                <div id="allTags" style="min-height: 100px; padding: 10px; border: 1px solid #e6e6e6; border-radius: 2px;">
+                                    {volist name="allTags" id="tag"}
+                                        <span class="layui-badge tag-item" 
+                                              style="background-color: {$tag.color}; margin-right: 5px; margin-bottom: 5px; cursor: pointer;"
+                                              data-id="{$tag.id}"
+                                              data-name="{$tag.name}"
+                                              data-color="{$tag.color}"
+                                              onclick="addTag(this)">
+                                            {$tag.name}
+                                        </span>
+                                    {/volist}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" onclick="saveTags()">保存</button>
+                                <button type="button" class="layui-btn layui-btn-primary" onclick="closeWindow()">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script>
+var courseId = {$course.id};
+var selectedTags = [];
+
+// 初始化已选标签
+{volist name="course.tags" id="tag"}
+selectedTags.push({
+    id: {$tag.id},
+    name: '{$tag.name}',
+    color: '{$tag.color}'
+});
+{/volist}
+
+// 添加标签
+function addTag(element) {
+    var tagId = parseInt(element.getAttribute('data-id'));
+    var tagName = element.getAttribute('data-name');
+    var tagColor = element.getAttribute('data-color');
+    
+    // 检查是否已存在
+    var exists = selectedTags.find(function(tag) {
+        return tag.id === tagId;
+    });
+    
+    if (!exists) {
+        selectedTags.push({
+            id: tagId,
+            name: tagName,
+            color: tagColor
+        });
+        renderCurrentTags();
+    }
+}
+
+// 移除标签
+function removeTag(tagId) {
+    selectedTags = selectedTags.filter(function(tag) {
+        return tag.id !== tagId;
+    });
+    renderCurrentTags();
+}
+
+// 渲染当前标签
+function renderCurrentTags() {
+    var container = document.getElementById('currentTags');
+    if (selectedTags.length === 0) {
+        container.innerHTML = '<span class="layui-text-color">暂无标签</span>';
+    } else {
+        var html = '';
+        selectedTags.forEach(function(tag) {
+            html += '<span class="layui-badge" style="background-color: ' + tag.color + '; margin-right: 5px; margin-bottom: 5px;">';
+            html += tag.name;
+            html += '<i class="layui-icon layui-icon-close" style="cursor: pointer;" onclick="removeTag(' + tag.id + ')"></i>';
+            html += '</span>';
+        });
+        container.innerHTML = html;
+    }
+}
+
+// 保存标签
+function saveTags() {
+    var tagIds = selectedTags.map(function(tag) {
+        return tag.id;
+    });
+    
+    $.post('/admin/course/updateTags', {
+        course_id: courseId,
+        tag_ids: tagIds
+    }, function(res) {
+        if (res.code === 0) {
+            layer.msg('标签保存成功', {icon: 1}, function() {
+                // 刷新父页面表格
+                if (parent.refreshTable) {
+                    parent.refreshTable();
+                }
+                // 关闭弹窗
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            });
+        } else {
+            layer.msg(res.msg || '保存失败', {icon: 2});
+        }
+    });
+}
+
+// 关闭窗口
+function closeWindow() {
+    var index = parent.layer.getFrameIndex(window.name);
+    parent.layer.close(index);
+}
+</script>
+{/block} 

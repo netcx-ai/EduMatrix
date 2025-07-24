@@ -1,0 +1,344 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-card">
+    <div class="layui-card-header">
+        <div class="layui-row">
+            <div class="layui-col-md6">
+                <span class="layui-breadcrumb">
+                    <a href="/admin/index/index">首页</a>
+                    <a href="/admin/teacher/index">教师管理</a>
+                    <a><cite>职称管理</cite></a>
+                </span>
+            </div>
+            <div class="layui-col-md6 text-right">
+                <button class="layui-btn layui-btn-normal" id="addTitleBtn">
+                    <i class="layui-icon">&#xe654;</i> 添加职称
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="layui-card-body">
+        <!-- 搜索栏 -->
+        <div class="layui-form layui-form-pane" style="margin-bottom: 15px;">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">关键词</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="keyword" placeholder="职称名称/代码/描述" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-inline">
+                        <select name="status">
+                            <option value="">全部</option>
+                            <option value="1">启用</option>
+                            <option value="0">禁用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">级别</label>
+                    <div class="layui-input-inline">
+                        <select name="level" id="levelSelect">
+                            <option value="">全部级别</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <button class="layui-btn" lay-submit lay-filter="search">
+                        <i class="layui-icon">&#xe615;</i> 搜索
+                    </button>
+                    <button type="reset" class="layui-btn layui-btn-primary">
+                        <i class="layui-icon">&#xe669;</i> 重置
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据表格 -->
+        <table class="layui-hide" id="titleTable" lay-filter="titleTable"></table>
+    </div>
+</div>
+
+<!-- 表格操作按钮模板 -->
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="batchDelete">批量删除</button>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" lay-event="clearCache">清除缓存</button>
+    </div>
+</script>
+
+<!-- 行操作按钮模板 -->
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="detail">详情</a>
+    {{# if(d.status == 1) { }}
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="disable">禁用</a>
+    {{# } else { }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+</script>
+
+<!-- 状态显示模板 -->
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 1) { }}
+    <span class="layui-badge layui-bg-green">启用</span>
+    {{# } else { }}
+    <span class="layui-badge">禁用</span>
+    {{# } }}
+</script>
+
+<!-- 级别显示模板 -->
+<script type="text/html" id="levelTpl">
+    <span class="layui-badge" id="level-{{d.level}}">{{d.level_desc}}</span>
+</script>
+
+{/block}
+
+{block name="script"}
+<script>
+layui.use(['table', 'form', 'layer'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    var $ = layui.$;
+    
+    // 全局级别配置变量
+    var levelConfig = {};
+
+    // 动态加载级别选项
+    function loadLevelOptions() {
+        $.get('/admin/teacher_title/getLevelOptions', function(res) {
+            if (res.code === 0) {
+                levelConfig = res.data; // 保存到全局变量
+                
+                var $levelSelect = $('#levelSelect');
+                $levelSelect.empty();
+                $levelSelect.append('<option value="">全部级别</option>');
+                
+                // 按级别值倒序排列（5级到1级）
+                Object.keys(levelConfig).sort(function(a, b) {
+                    return parseInt(b) - parseInt(a);
+                }).forEach(function(level) {
+                    var levelData = levelConfig[level];
+                    $levelSelect.append('<option value="' + level + '">' + levelData.name + '</option>');
+                });
+                form.render('select');
+            }
+        });
+    }
+    
+    // 页面加载完成后初始化级别选项
+    loadLevelOptions();
+
+    // 更新级别显示的函数
+    function updateLevelDisplay() {
+        $('[id^="level-"]').each(function() {
+            var level = $(this).attr('id').replace('level-', '');
+            var levelData = levelConfig[level];
+            var levelName = levelData ? levelData.name : '未知级别';
+            var bgColor = '';
+            
+            switch(parseInt(level)) {
+                case 5: bgColor = '#FF5722'; break;
+                case 4: bgColor = '#FFB800'; break;
+                case 3: bgColor = '#01AAED'; break;
+                case 2: bgColor = '#5FB878'; break;
+                default: bgColor = '#c2c2c2';
+            }
+            
+            $(this).text(levelName).css('background-color', bgColor);
+        });
+    }
+
+    // 渲染表格
+    table.render({
+        elem: '#titleTable',
+        url: '/admin/teacher_title/index',
+        toolbar: '#toolbarDemo',
+        defaultToolbar: ['filter', 'exports', 'print', {
+            title: '提示',
+            layEvent: 'LAYTABLE_TIPS',
+            icon: 'layui-icon-tips'
+        }],
+        cols: [[
+            {type: 'checkbox', fixed: 'left'},
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'name', title: '职称名称', width: 120},
+            {field: 'code', title: '职称代码', width: 150},
+            {field: 'level', title: '级别', width: 120, templet: '#levelTpl'},
+            {field: 'sort', title: '排序', width: 80, sort: true, edit: 'text'},
+            {field: 'status', title: '状态', width: 100, templet: '#statusTpl'},
+            {field: 'description', title: '描述', minWidth: 200},
+            {field: 'create_time', title: '创建时间', width: 160},
+            {field: 'update_time', title: '更新时间', width: 160},
+            {fixed: 'right', title: '操作', toolbar: '#barDemo'}
+        ]],
+        page: true,
+        height: 'full-220',
+        cellEdit: 'dblclick',
+        done: function() {
+            // 表格渲染完成后更新级别显示
+            setTimeout(function() {
+                updateLevelDisplay();
+            }, 100);
+        }
+    });
+
+    // 监听搜索操作
+    form.on('submit(search)', function(data){
+        table.reloadData('titleTable', {
+            where: data.field,
+            page: {curr: 1}
+        });
+        return false;
+    });
+
+    // 监听头工具栏事件
+    table.on('toolbar(titleTable)', function(obj){
+        var checkStatus = table.checkStatus(obj.config.id);
+        switch(obj.event){
+            case 'batchDelete':
+                var data = checkStatus.data;
+                if(data.length === 0){
+                    layer.msg('请选择要删除的数据');
+                    return;
+                }
+                layer.confirm('确定删除选中的 ' + data.length + ' 条记录吗？', function(index){
+                    var ids = [];
+                    layui.each(data, function(i, item){
+                        ids.push(item.id);
+                    });
+                    // 批量删除请求
+                    $.post('/admin/teacher_title/batchDelete', {ids: ids}, function(res){
+                        if(res.code === 0){
+                            layer.msg('删除成功');
+                            table.reloadData('titleTable');
+                        } else {
+                            layer.msg(res.msg || '删除失败');
+                        }
+                    });
+                    layer.close(index);
+                });
+                break;
+            case 'clearCache':
+                $.post('/admin/teacher_title/clearCache', function(res){
+                    if(res.code === 0){
+                        layer.msg('缓存清除成功');
+                    } else {
+                        layer.msg(res.msg || '清除失败');
+                    }
+                });
+                break;
+        }
+    });
+
+    // 监听行工具事件
+    table.on('tool(titleTable)', function(obj){
+        var data = obj.data;
+        switch(obj.event){
+            case 'detail':
+                layer.open({
+                    type: 2,
+                    title: '职称详情',
+                    shadeClose: true,
+                    shade: 0.8,
+                    area: ['800px', '600px'],
+                    content: '/admin/teacher_title/detail?id=' + data.id + '&popup=1'
+                });
+                break;
+            case 'del':
+                layer.confirm('确定删除该职称吗？', function(index){
+                    $.post('/admin/teacher_title/destroy/' + data.id, function(res){
+                        if(res.code === 0){
+                            obj.del();
+                            layer.close(index);
+                            layer.msg('删除成功');
+                        } else {
+                            layer.msg(res.msg || '删除失败');
+                        }
+                    });
+                });
+                break;
+            case 'edit':
+                layer.open({
+                    type: 2,
+                    title: '编辑职称',
+                    shadeClose: true,
+                    shade: 0.8,
+                    area: ['600px', '500px'],
+                    content: '/admin/teacher_title/edit?id=' + data.id + '&popup=1',
+                    end: function(){
+                        table.reloadData('titleTable');
+                    }
+                });
+                break;
+            case 'enable':
+            case 'disable':
+                var status = obj.event === 'enable' ? 1 : 0;
+                var text = obj.event === 'enable' ? '启用' : '禁用';
+                layer.confirm('确定' + text + '该职称吗？', function(index){
+                    $.post('/admin/teacher_title/changeStatus', {
+                        id: data.id,
+                        status: status
+                    }, function(res){
+                        if(res.code === 0){
+                            // 立即更新当前行数据
+                            obj.update({
+                                status: status
+                            });
+                            layer.close(index);
+                            layer.msg(text + '成功', {icon: 1, time: 1000}, function(){
+                                // 重新渲染表格，确保操作按钮状态更新
+                                table.reloadData('titleTable');
+                            });
+                        } else {
+                            layer.msg(res.msg || text + '失败', {icon: 2});
+                        }
+                    });
+                });
+                break;
+        }
+    });
+
+    // 监听单元格编辑
+    table.on('edit(titleTable)', function(obj){
+        var value = obj.value;
+        var data = obj.data;
+        var field = obj.field;
+        
+        if(field === 'sort'){
+            $.post('/admin/teacher_title/updateSort', {
+                id: data.id,
+                sort: value
+            }, function(res){
+                if(res.code === 0){
+                    layer.msg('排序更新成功');
+                } else {
+                    layer.msg(res.msg || '更新失败');
+                    table.reloadData('titleTable');
+                }
+            });
+        }
+    });
+
+    // 添加职称按钮
+    $('#addTitleBtn').on('click', function(){
+        layer.open({
+            type: 2,
+            title: '添加职称',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['600px', '500px'],
+            content: '/admin/teacher_title/add?popup=1',
+            end: function(){
+                table.reloadData('titleTable');
+            }
+        });
+    });
+});
+</script>
+{/block} 
