@@ -1,0 +1,407 @@
+<?php /*a:1:{s:42:"F:\EduMatrix\backend\view\admin\login.html";i:1753341575;}*/ ?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>管理后台登录</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        .login-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        /* 动态背景动画 */
+        .bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .bg-animation::before,
+        .bg-animation::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .bg-animation::before {
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .bg-animation::after {
+            bottom: 10%;
+            right: 10%;
+            animation-delay: 3s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .login-box {
+            width: 420px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 2;
+            animation: slideIn 0.8s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-title {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-title h2 {
+            font-size: 28px;
+            color: #fff;
+            font-weight: 300;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .login-title p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        .layui-form-item {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .layui-input {
+            height: 50px;
+            line-height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 25px;
+            color: #fff;
+            font-size: 16px;
+            padding: 0 20px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .layui-input:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .layui-input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .layui-input-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .layui-input-group .layui-input {
+            flex: 1;
+            border-radius: 25px 0 0 25px;
+        }
+
+        .layui-input-suffix {
+            flex-shrink: 0;
+        }
+
+        .layui-btn {
+            height: 55px;
+            line-height: 55px;
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 28px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            text-transform: uppercase;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .layui-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .layui-btn:hover::before {
+            left: 100%;
+        }
+
+        .layui-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        }
+
+        .layui-btn:active {
+            transform: translateY(-1px) scale(0.98);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .layui-btn-primary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 0 25px 25px 0;
+            color: #fff;
+            width: auto;
+            height: 50px;
+            line-height: 50px;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .layui-btn-primary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .layui-btn-disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .layui-btn-disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .login-box {
+                width: 90%;
+                padding: 30px 20px;
+            }
+            
+            .login-title h2 {
+                font-size: 24px;
+            }
+        }
+
+        /* 加载动画 */
+        .loading-dots {
+            display: inline-block;
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        /* 输入框图标 */
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            z-index: 1;
+        }
+
+        .input-with-icon .layui-input {
+            padding-left: 45px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="bg-animation"></div>
+        <div class="login-box">
+            <div class="login-title">
+                <h2>管理后台</h2>
+                <p>欢迎回来，请登录您的账户</p>
+            </div>
+            <form class="layui-form" action="">
+                <div class="layui-form-item input-with-icon">
+                    <i class="input-icon layui-icon layui-icon-username"></i>
+                    <input type="text" name="username" required lay-verify="required" placeholder="请输入用户名" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-form-item input-with-icon">
+                    <i class="input-icon layui-icon layui-icon-password"></i>
+                    <input type="password" name="password" required lay-verify="required" placeholder="请输入密码" autocomplete="off" class="layui-input">
+                </div>
+                <div class="layui-form-item" id="smsCodeItem" style="display: none;">
+                    <div class="layui-input-group">
+                        <input type="text" name="code" placeholder="请输入验证码" autocomplete="off" class="layui-input">
+                        <div class="layui-input-suffix">
+                            <button type="button" class="layui-btn layui-btn-primary" id="sendCode">获取验证码</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <button class="layui-btn" lay-submit lay-filter="login">登录</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/layui/layui.js"></script>
+    <script>
+    layui.use(['form', 'layer', 'jquery'], function(){
+        var form = layui.form;
+        var layer = layui.layer;
+        var $ = layui.jquery;
+        var needSms = false;
+        
+        // 监听登录表单提交
+        form.on('submit(login)', function(data){
+            var loading = layer.load(2);
+            $.ajax({
+                url: '/admin/login',
+                type: 'POST',
+                data: data.field,
+                success: function(res){
+                    layer.close(loading);
+                    if(res.code === 0){
+                        if(res.data.need_sms){
+                            // 需要短信验证
+                            needSms = true;
+                            $('#smsCodeItem').fadeIn(300);
+                            layer.msg('请输入短信验证码', {icon: 1});
+                        }else{
+                            // 登录成功
+                            layer.msg('登录成功', {icon: 1}, function(){
+                                // 跳转到首页
+                                location.href = '/admin/index';
+                            });
+                        }
+                    }else{
+                        layer.msg(res.msg, {icon: 2});
+                    }
+                },
+                error: function(){
+                    layer.close(loading);
+                    layer.msg('服务器错误', {icon: 2});
+                }
+            });
+            return false;
+        });
+        
+        // 发送验证码
+        $('#sendCode').click(function(){
+            var $btn = $(this);
+            if($btn.hasClass('layui-btn-disabled')) return;
+            
+            $btn.addClass('layui-btn-disabled');
+            var countdown = 60;
+            var timer = setInterval(function(){
+                if(countdown <= 0){
+                    clearInterval(timer);
+                    $btn.removeClass('layui-btn-disabled').text('获取验证码');
+                }else{
+                    $btn.text(countdown + '秒后重试');
+                    countdown--;
+                }
+            }, 1000);
+            
+            // 重新发送登录请求获取验证码
+            $.ajax({
+                url: '/admin/login',
+                type: 'POST',
+                data: {
+                    username: $('input[name="username"]').val(),
+                    password: $('input[name="password"]').val(),
+                    need_sms: 1
+                },
+                success: function(res){
+                    if(res.code === 0){
+                        layer.msg('验证码已发送', {icon: 1});
+                    }else{
+                        layer.msg(res.msg, {icon: 2});
+                        clearInterval(timer);
+                        $btn.removeClass('layui-btn-disabled').text('获取验证码');
+                    }
+                },
+                error: function(){
+                    layer.msg('服务器错误', {icon: 2});
+                    clearInterval(timer);
+                    $btn.removeClass('layui-btn-disabled').text('获取验证码');
+                }
+            });
+        });
+
+        // 输入框焦点效果
+        $('.layui-input').on('focus', function() {
+            $(this).parent().addClass('focused');
+        }).on('blur', function() {
+            $(this).parent().removeClass('focused');
+        });
+    });
+    </script>
+</body>
+</html> 
