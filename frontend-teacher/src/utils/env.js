@@ -1,1 +1,0 @@
-export const fileBase = import.meta.env.VITE_FILE_BASE; 
