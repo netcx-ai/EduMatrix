@@ -1,0 +1,93 @@
+{extend name="common/popup" /}
+
+{block name="title"}编辑标签{/block}
+
+{block name="page_title"}编辑标签{/block}
+
+{block name="content"}
+<div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-body">
+                    <form class="layui-form" lay-filter="editForm">
+                        <input type="hidden" name="id" value="{$tag.id}">
+                        
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">标签名称</label>
+                            <div class="layui-input-block">
+                                <input type="text" name="name" value="{$tag.name}" required lay-verify="required" placeholder="请输入标签名称" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">描述</label>
+                            <div class="layui-input-block">
+                                <textarea name="description" placeholder="请输入标签描述" class="layui-textarea">{$tag.description}</textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">标签颜色</label>
+                            <div class="layui-input-block">
+                                <input type="color" name="color" value="{$tag.color}" class="layui-input" style="width: 100px;">
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">排序</label>
+                            <div class="layui-input-block">
+                                <input type="number" name="sort" value="{$tag.sort}" placeholder="数字越小越靠前" autocomplete="off" class="layui-input">
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">状态</label>
+                            <div class="layui-input-block">
+                                <input type="radio" name="status" value="1" title="启用" {if condition="$tag.status == 1"}checked{/if}>
+                                <input type="radio" name="status" value="0" title="禁用" {if condition="$tag.status == 0"}checked{/if}>
+                            </div>
+                        </div>
+                        
+                        <div class="layui-form-item">
+                            <div class="layui-input-block">
+                                <button class="layui-btn" lay-submit lay-filter="editSubmit">立即提交</button>
+                                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script>
+layui.use(['form', 'layer'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+    
+    // 监听提交
+    form.on('submit(editSubmit)', function(data){
+        $.post('/admin/course/editTag', data.field, function(res){
+            if(res.code === 0){
+                layer.msg('更新成功', {icon: 1}, function(){
+                    // 刷新父页面表格
+                    if(parent.refreshTable){
+                        parent.refreshTable();
+                    }
+                    // 关闭弹窗
+                    var index = parent.layer.getFrameIndex(window.name);
+                    parent.layer.close(index);
+                });
+            } else {
+                layer.msg(res.msg || '更新失败', {icon: 2});
+            }
+        });
+        return false;
+    });
+});
+</script>
+{/block} 

@@ -1,0 +1,409 @@
+{extend name="common/base" /}
+
+{block name="title"}访问统计{/block}
+
+{block name="content"}
+<div class="layui-fluid">
+    <!-- 实时统计卡片 -->
+    <div class="layui-row layui-col-space15">
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-chart" style="color: #1E9FFF;"></i>
+                    今日PV
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="todayPv">-</h2>
+                    <p>页面浏览量</p>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-user" style="color: #5FB878;"></i>
+                    今日UV
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="todayUv">-</h2>
+                    <p>独立访客数</p>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-location" style="color: #FFB800;"></i>
+                    今日IP
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="todayIp">-</h2>
+                    <p>独立IP数</p>
+                </div>
+            </div>
+        </div>
+        <div class="layui-col-md3">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    <i class="layui-icon layui-icon-online" style="color: #FF5722;"></i>
+                    在线用户
+                </div>
+                <div class="layui-card-body">
+                    <h2 id="onlineUsers">-</h2>
+                    <p>当前在线</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 统计图表 -->
+    <div class="layui-row layui-col-space15">
+        <!-- 访问趋势 -->
+        <div class="layui-col-md12">
+            <div class="layui-card">
+                <div class="layui-card-header">
+                    访问趋势
+                    <div class="layui-btn-group" style="float: right;">
+                        <button type="button" class="layui-btn layui-btn-sm" data-days="7">7天</button>
+                        <button type="button" class="layui-btn layui-btn-sm" data-days="30">30天</button>
+                        <button type="button" class="layui-btn layui-btn-sm" data-days="90">90天</button>
+                    </div>
+                </div>
+                <div class="layui-card-body">
+                    <div id="visitTrendChart" style="height: 400px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="layui-row layui-col-space15">
+        <!-- 热门页面 -->
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header">热门页面</div>
+                <div class="layui-card-body">
+                    <table class="layui-table" lay-size="sm">
+                        <thead>
+                            <tr>
+                                <th>页面URL</th>
+                                <th>访问次数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="popularPages">
+                            <tr><td colspan="2" class="layui-text-center">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 访问来源 -->
+        <div class="layui-col-md6">
+            <div class="layui-card">
+                <div class="layui-card-header">访问来源</div>
+                <div class="layui-card-body">
+                    <table class="layui-table" lay-size="sm">
+                        <thead>
+                            <tr>
+                                <th>来源网站</th>
+                                <th>访问次数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="refererStats">
+                            <tr><td colspan="2" class="layui-text-center">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="layui-row layui-col-space15">
+        <!-- 设备类型统计 -->
+        <div class="layui-col-md4">
+            <div class="layui-card">
+                <div class="layui-card-header">设备类型</div>
+                <div class="layui-card-body">
+                    <div id="deviceChart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 浏览器统计 -->
+        <div class="layui-col-md4">
+            <div class="layui-card">
+                <div class="layui-card-header">浏览器分布</div>
+                <div class="layui-card-body">
+                    <div id="browserChart" style="height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 地域分布 -->
+        <div class="layui-col-md4">
+            <div class="layui-card">
+                <div class="layui-card-header">地域分布</div>
+                <div class="layui-card-body">
+                    <table class="layui-table" lay-size="sm">
+                        <thead>
+                            <tr>
+                                <th>地区</th>
+                                <th>访问次数</th>
+                            </tr>
+                        </thead>
+                        <tbody id="locationStats">
+                            <tr><td colspan="2" class="layui-text-center">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+layui.use(['layer'], function(){
+    var layer = layui.layer;
+    
+    // 初始化图表
+    var visitTrendChart = echarts.init(document.getElementById('visitTrendChart'));
+    var deviceChart = echarts.init(document.getElementById('deviceChart'));
+    var browserChart = echarts.init(document.getElementById('browserChart'));
+    
+    // 加载实时统计数据
+    function loadRealTimeStats() {
+        $.get('/admin/stats/realtime', function(res) {
+            if (res.code === 0) {
+                $('#todayPv').text(res.data.today_pv || 0);
+                $('#todayUv').text(res.data.today_uv || 0);
+                $('#todayIp').text(res.data.today_ip || 0);
+                $('#onlineUsers').text(res.data.online_users || 0);
+            }
+        });
+    }
+    
+    // 加载访问趋势数据
+    function loadVisitTrend(days) {
+        $.post('/admin/stats/visit', {
+            type: 'trend',
+            days: days
+        }, function(res) {
+            if (res.code === 0) {
+                var dates = [];
+                var pvData = [];
+                var uvData = [];
+                
+                res.data.forEach(function(item) {
+                    dates.push(item.date);
+                    pvData.push(item.pv);
+                    uvData.push(item.uv);
+                });
+                
+                var option = {
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    legend: {
+                        data: ['PV', 'UV']
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: dates
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [
+                        {
+                            name: 'PV',
+                            type: 'line',
+                            data: pvData,
+                            smooth: true
+                        },
+                        {
+                            name: 'UV',
+                            type: 'line',
+                            data: uvData,
+                            smooth: true
+                        }
+                    ]
+                };
+                
+                visitTrendChart.setOption(option);
+            }
+        });
+    }
+    
+    // 加载热门页面
+    function loadPopularPages() {
+        $.post('/admin/stats/visit', {
+            type: 'popular_pages'
+        }, function(res) {
+            if (res.code === 0) {
+                var html = '';
+                if (res.data.length > 0) {
+                    res.data.forEach(function(item) {
+                        html += '<tr><td>' + item.url + '</td><td>' + item.visit_count + '</td></tr>';
+                    });
+                } else {
+                    html = '<tr><td colspan="2" class="layui-text-center">暂无数据</td></tr>';
+                }
+                $('#popularPages').html(html);
+            }
+        });
+    }
+    
+    // 加载访问来源
+    function loadRefererStats() {
+        $.post('/admin/stats/visit', {
+            type: 'referer'
+        }, function(res) {
+            if (res.code === 0) {
+                var html = '';
+                if (res.data.length > 0) {
+                    res.data.forEach(function(item) {
+                        var referer = item.referer || '直接访问';
+                        if (referer.length > 30) {
+                            referer = referer.substring(0, 30) + '...';
+                        }
+                        html += '<tr><td>' + referer + '</td><td>' + item.visit_count + '</td></tr>';
+                    });
+                } else {
+                    html = '<tr><td colspan="2" class="layui-text-center">暂无数据</td></tr>';
+                }
+                $('#refererStats').html(html);
+            }
+        });
+    }
+    
+    // 加载设备类型统计
+    function loadDeviceStats() {
+        $.post('/admin/stats/visit', {
+            type: 'device'
+        }, function(res) {
+            if (res.code === 0) {
+                var data = res.data.map(function(item) {
+                    return {
+                        name: item.device_type,
+                        value: item.count
+                    };
+                });
+                
+                var option = {
+                    tooltip: {
+                        trigger: 'item'
+                    },
+                    series: [
+                        {
+                            type: 'pie',
+                            radius: '60%',
+                            data: data,
+                            emphasis: {
+                                itemStyle: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            }
+                        }
+                    ]
+                };
+                
+                deviceChart.setOption(option);
+            }
+        });
+    }
+    
+    // 加载浏览器统计
+    function loadBrowserStats() {
+        $.post('/admin/stats/visit', {
+            type: 'browser'
+        }, function(res) {
+            if (res.code === 0) {
+                var data = res.data.map(function(item) {
+                    return {
+                        name: item.browser,
+                        value: item.count
+                    };
+                });
+                
+                var option = {
+                    tooltip: {
+                        trigger: 'item'
+                    },
+                    series: [
+                        {
+                            type: 'pie',
+                            radius: '60%',
+                            data: data,
+                            emphasis: {
+                                itemStyle: {
+                                    shadowBlur: 10,
+                                    shadowOffsetX: 0,
+                                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                }
+                            }
+                        }
+                    ]
+                };
+                
+                browserChart.setOption(option);
+            }
+        });
+    }
+    
+    // 加载地域分布
+    function loadLocationStats() {
+        $.post('/admin/stats/visit', {
+            type: 'location'
+        }, function(res) {
+            if (res.code === 0) {
+                var html = '';
+                if (res.data.length > 0) {
+                    res.data.forEach(function(item) {
+                        var location = item.province;
+                        if (item.city && item.city !== item.province) {
+                            location += ' ' + item.city;
+                        }
+                        html += '<tr><td>' + location + '</td><td>' + item.count + '</td></tr>';
+                    });
+                } else {
+                    html = '<tr><td colspan="2" class="layui-text-center">暂无数据</td></tr>';
+                }
+                $('#locationStats').html(html);
+            }
+        });
+    }
+    
+    // 时间范围按钮事件
+    $('.layui-btn-group button').click(function() {
+        var days = $(this).data('days');
+        $('.layui-btn-group button').removeClass('layui-btn-primary');
+        $(this).addClass('layui-btn-primary');
+        loadVisitTrend(days);
+    });
+    
+    // 初始化加载数据
+    loadRealTimeStats();
+    loadVisitTrend(7);
+    loadPopularPages();
+    loadRefererStats();
+    loadDeviceStats();
+    loadBrowserStats();
+    loadLocationStats();
+    
+    // 定时刷新实时数据
+    setInterval(loadRealTimeStats, 30000); // 30秒刷新一次
+    
+    // 响应式处理
+    window.addEventListener('resize', function() {
+        visitTrendChart.resize();
+        deviceChart.resize();
+        browserChart.resize();
+    });
+});
+</script>
+{/block} 

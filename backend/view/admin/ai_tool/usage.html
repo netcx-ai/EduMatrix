@@ -1,0 +1,235 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">
+            <h3>AI工具使用统计</h3>
+        </div>
+        <div class="layui-card-body">
+            <!-- 搜索栏 -->
+            <div class="layui-form layui-form-pane" style="margin-bottom: 15px;">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">工具名称</label>
+                        <div class="layui-input-inline">
+                            <select name="tool_id" lay-search>
+                                <option value="">全部工具</option>
+                                {foreach $tools as $tool}
+                                <option value="{$tool.id}">{$tool.name}</option>
+                                {/foreach}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">学校</label>
+                        <div class="layui-input-inline">
+                            <select name="school_id" lay-search>
+                                <option value="">全部学校</option>
+                                {foreach $schools as $school}
+                                <option value="{$school.id}">{$school.name}</option>
+                                {/foreach}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">时间范围</label>
+                        <div class="layui-input-inline">
+                            <select name="date_range">
+                                <option value="today">今日</option>
+                                <option value="yesterday">昨日</option>
+                                <option value="week">本周</option>
+                                <option value="month" selected>本月</option>
+                                <option value="year">本年</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn" lay-submit lay-filter="searchForm">
+                            <i class="layui-icon layui-icon-search"></i> 搜索
+                        </button>
+                        <button class="layui-btn layui-btn-primary" id="resetSearch">重置</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计卡片 -->
+            <div class="layui-row layui-col-space15" style="margin-bottom: 15px;">
+                <div class="layui-col-md3">
+                    <div class="layui-card">
+                        <div class="layui-card-header">总调用次数</div>
+                        <div class="layui-card-body" style="font-size: 24px;" id="totalUsage">
+                            0
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md3">
+                    <div class="layui-card">
+                        <div class="layui-card-header">今日调用次数</div>
+                        <div class="layui-card-body" style="font-size: 24px;" id="todayUsage">
+                            0
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md3">
+                    <div class="layui-card">
+                        <div class="layui-card-header">使用学校数</div>
+                        <div class="layui-card-body" style="font-size: 24px;" id="schoolCount">
+                            0
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md3">
+                    <div class="layui-card">
+                        <div class="layui-card-header">使用教师数</div>
+                        <div class="layui-card-body" style="font-size: 24px;" id="teacherCount">
+                            0
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图表区域 -->
+            <div class="layui-row layui-col-space15">
+                <div class="layui-col-md6">
+                    <div class="layui-card">
+                        <div class="layui-card-header">使用趋势</div>
+                        <div class="layui-card-body">
+                            <div id="usageTrend" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-col-md6">
+                    <div class="layui-card">
+                        <div class="layui-card-header">工具使用分布</div>
+                        <div class="layui-card-body">
+                            <div id="toolDistribution" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据表格 -->
+            <div class="layui-card" style="margin-top: 15px;">
+                <div class="layui-card-header">使用记录</div>
+                <div class="layui-card-body">
+                    <table id="usageTable" lay-filter="usageTable"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script src="/static/echarts/echarts.min.js"></script>
+<script>
+layui.use(['table', 'form', 'layer'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    
+    // 初始化图表
+    var usageTrend = echarts.init(document.getElementById('usageTrend'));
+    var toolDistribution = echarts.init(document.getElementById('toolDistribution'));
+    
+    // 渲染表格
+    var tableIns = table.render({
+        elem: '#usageTable',
+        url: '/admin/ai_tool/usage/list',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'tool_name', title: '工具名称', width: 150},
+            {field: 'school_name', title: '学校', width: 150},
+            {field: 'teacher_name', title: '教师', width: 100},
+            {field: 'usage_time', title: '使用时间', width: 180},
+            {field: 'usage_type', title: '使用类型', width: 100},
+            {field: 'usage_count', title: '调用次数', width: 100, align: 'center'},
+            {field: 'usage_duration', title: '使用时长', width: 100, align: 'center'},
+            {field: 'status', title: '状态', width: 100},
+            {field: 'remark', title: '备注', minWidth: 200}
+        ]],
+        limits: [10, 20, 50, 100],
+        limit: 20
+    });
+    
+    // 加载统计数据
+    function loadStatistics(params) {
+        $.get('/admin/ai_tool/usage/stats', params, function(res){
+            if(res.code === 0){
+                var data = res.data;
+                
+                // 更新统计卡片
+                $('#totalUsage').text(data.total_usage);
+                $('#todayUsage').text(data.today_usage);
+                $('#schoolCount').text(data.school_count);
+                $('#teacherCount').text(data.teacher_count);
+                
+                // 更新使用趋势图表
+                usageTrend.setOption({
+                    title: {text: '使用趋势'},
+                    tooltip: {trigger: 'axis'},
+                    xAxis: {type: 'category', data: data.trend.dates},
+                    yAxis: {type: 'value'},
+                    series: [{
+                        name: '使用次数',
+                        type: 'line',
+                        data: data.trend.counts
+                    }]
+                });
+                
+                // 更新工具分布图表
+                toolDistribution.setOption({
+                    title: {text: '工具使用分布'},
+                    tooltip: {trigger: 'item'},
+                    series: [{
+                        name: '使用次数',
+                        type: 'pie',
+                        radius: '60%',
+                        data: data.distribution
+                    }]
+                });
+            }
+        });
+    }
+    
+    // 搜索功能
+    form.on('submit(searchForm)', function(data){
+        // 重载表格
+        tableIns.reload({
+            where: data.field,
+            page: {curr: 1}
+        });
+        
+        // 重新加载统计数据
+        loadStatistics(data.field);
+        return false;
+    });
+    
+    // 重置搜索
+    $('#resetSearch').on('click', function(){
+        $('select[name="tool_id"]').val('');
+        $('select[name="school_id"]').val('');
+        $('select[name="date_range"]').val('month');
+        form.render('select');
+        
+        var defaultParams = {date_range: 'month'};
+        tableIns.reload({
+            where: defaultParams,
+            page: {curr: 1}
+        });
+        loadStatistics(defaultParams);
+    });
+    
+    // 初始加载
+    loadStatistics({date_range: 'month'});
+    
+    // 窗口大小改变时重绘图表
+    window.addEventListener('resize', function(){
+        usageTrend.resize();
+        toolDistribution.resize();
+    });
+});
+</script>
+{/block} 

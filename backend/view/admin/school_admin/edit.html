@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>编辑学校管理员</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="stylesheet" href="/static/layui/css/layui.css" media="all">
+</head>
+<body style="padding: 15px;">
+    <form class="layui-form" lay-filter="editSchoolAdminForm">
+        <input type="hidden" name="id" id="admin_id">
+        
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">所属学校</label>
+                    <div class="layui-input-block">
+                        <select name="school_id" lay-verify="required" lay-filter="school">
+                            <option value="">请选择学校</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">用户名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="username" placeholder="请输入用户名" autocomplete="off" class="layui-input" lay-verify="required" readonly>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">新密码</label>
+                    <div class="layui-input-block">
+                        <input type="password" name="password" placeholder="不修改请留空" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">确认密码</label>
+                    <div class="layui-input-block">
+                        <input type="password" name="confirm_password" placeholder="不修改请留空" autocomplete="off" class="layui-input" lay-verify="confirmPass">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">真实姓名</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="real_name" placeholder="请输入真实姓名" autocomplete="off" class="layui-input" lay-verify="required">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">手机号</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="phone" placeholder="请输入手机号" autocomplete="off" class="layui-input" lay-verify="required|phone">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">邮箱</label>
+                    <div class="layui-input-block">
+                        <input type="email" name="email" placeholder="请输入邮箱" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">性别</label>
+                    <div class="layui-input-block">
+                        <input type="radio" name="gender" value="1" title="男">
+                        <input type="radio" name="gender" value="2" title="女">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">职位</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="position" placeholder="请输入职位" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">部门</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="department" placeholder="请输入部门" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">角色</label>
+                    <div class="layui-input-block">
+                        <select name="role" lay-verify="required">
+                            <option value="">请选择角色</option>
+                            <option value="admin">管理员</option>
+                            <option value="dean">院长</option>
+                            <option value="director">主任</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="layui-col-md6">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-block">
+                        <input type="radio" name="status" value="1" title="启用">
+                        <input type="radio" name="status" value="0" title="禁用">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layui-form-item layui-form-text">
+            <label class="layui-form-label">备注</label>
+            <div class="layui-input-block">
+                <textarea name="remark" placeholder="请输入备注信息" class="layui-textarea" rows="3"></textarea>
+            </div>
+        </div>
+        
+        <div class="layui-form-item">
+            <div class="layui-input-block">
+                <button class="layui-btn" lay-submit lay-filter="editSchoolAdminSubmit">立即提交</button>
+                <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+            </div>
+        </div>
+    </form>
+    
+    <script src="/static/admin/js/jquery-3.7.1.min.js"></script>
+    <script src="/static/layui/layui.js"></script>
+    <script>
+    layui.use(['form', 'layer'], function(){
+        var form = layui.form;
+        var layer = layui.layer;
+        
+        // 获取管理员ID
+        var adminId = '{$admin.id}';
+        if(adminId){
+            $('#admin_id').val(adminId);
+        }
+        
+        // 自定义验证规则
+        form.verify({
+            confirmPass: function(value){
+                var password = $('input[name="password"]').val();
+                if(password && value !== password){
+                    return '两次密码输入不一致';
+                }
+            }
+        });
+        
+        // 加载学校列表
+        var schools = JSON.parse('{$schools|json_encode|raw}');
+        var html = '<option value="">请选择学校</option>';
+        schools.forEach(function(item){
+            html += '<option value="' + item.id + '">' + item.name + '</option>';
+        });
+        $('select[name="school_id"]').html(html);
+        form.render('select');
+        
+        // 加载管理员数据
+        if(adminId){
+            $.get('/admin/school_admin/getDetail', {id: adminId}, function(res){
+                if(res.code === 0){
+                    var data = res.data;
+                    form.val('editSchoolAdminForm', {
+                        'id': data.id,
+                        'school_id': data.school_id,
+                        'username': data.username,
+                        'real_name': data.real_name,
+                        'phone': data.phone,
+                        'email': data.email,
+                        'position': data.position,
+                        'department': data.department,
+                        'role': data.role,
+                        'status': data.status
+                    });
+                }
+            });
+        }
+        
+        // 表单提交
+        form.on('submit(editSchoolAdminSubmit)', function(data){
+            // 如果密码为空，删除密码字段
+            if(!data.field.password){
+                delete data.field.password;
+                delete data.field.confirm_password;
+            }
+            
+            $.post('/admin/school_admin/update/' + data.field.id, data.field, function(res){
+                if(res.code === 200){
+                    layer.msg('更新成功', {icon: 1}, function(){
+                        // 关闭弹窗并刷新父页面表格
+                        var frameIndex = parent.layer.getFrameIndex(window.name);
+                        parent.layer.close(frameIndex);
+                        if (parent.layui && parent.layui.table) {
+                            parent.layui.table.reload('schoolAdminTable');
+                        }
+                    });
+                } else {
+                    layer.msg(res.message || '更新失败', {icon: 2});
+                }
+            });
+            return false;
+        });
+    });
+    </script>
+</body>
+</html> 

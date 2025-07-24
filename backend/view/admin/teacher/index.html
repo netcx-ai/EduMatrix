@@ -1,0 +1,322 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-card">
+    <div class="layui-card-header">
+        <div class="layui-row">
+            <div class="layui-col-md6">
+                <span class="layui-breadcrumb">
+                    <a href="/admin/index/index">首页</a>
+                    <a><cite>教师管理</cite></a>
+                </span>
+            </div>
+            <div class="layui-col-md6 text-right">
+                <button class="layui-btn layui-btn-normal" id="addTeacherBtn">
+                    <i class="layui-icon">&#xe654;</i> 添加教师
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="layui-card-body">
+        <!-- 搜索栏 -->
+        <div class="layui-form layui-form-pane" style="margin-bottom: 15px;">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">关键词</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="keyword" placeholder="姓名/工号/手机/邮箱" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">学校</label>
+                    <div class="layui-input-inline">
+                        <select name="school_id" lay-filter="school">
+                            <option value="">全部学校</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">学院</label>
+                    <div class="layui-input-inline">
+                        <select name="college_id">
+                            <option value="">全部学院</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-inline">
+                        <select name="status">
+                            <option value="">全部</option>
+                            <option value="1">启用</option>
+                            <option value="0">禁用</option>
+                            <option value="2">待审核</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">职称</label>
+                    <div class="layui-input-inline">
+                        <select name="title">
+                            <option value="">全部职称</option>
+                            <option value="1">教授</option>
+                            <option value="2">副教授</option>
+                            <option value="3">讲师</option>
+                            <option value="4">助教</option>
+                            <option value="5">其他</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <button class="layui-btn" lay-submit lay-filter="search">
+                        <i class="layui-icon">&#xe615;</i> 搜索
+                    </button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据表格 -->
+        <table id="teacherTable" lay-filter="teacherTable"></table>
+    </div>
+</div>
+
+<!-- 操作按钮模板 -->
+<script type="text/html" id="operationBar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="detail">详情</a>
+    {{# if(d.status == 1) { }}
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="disable">禁用</a>
+    {{# } else if(d.status == 0) { }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
+    {{# } else if(d.status == 2) { }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="approve">审核</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+</script>
+
+<!-- 状态模板 -->
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 1) { }}
+    <span class="layui-badge layui-bg-green">启用</span>
+    {{# } else if(d.status == 0) { }}
+    <span class="layui-badge">禁用</span>
+    {{# } else if(d.status == 2) { }}
+    <span class="layui-badge layui-bg-orange">待审核</span>
+    {{# } }}
+</script>
+
+<!-- 职称模板 -->
+<script type="text/html" id="titleTpl">
+    {{# if(d.title == 1) { }}
+    <span>教授</span>
+    {{# } else if(d.title == 2) { }}
+    <span>副教授</span>
+    {{# } else if(d.title == 3) { }}
+    <span>讲师</span>
+    {{# } else if(d.title == 4) { }}
+    <span>助教</span>
+    {{# } else if(d.title == 5) { }}
+    <span>其他</span>
+    {{# } else { }}
+    <span class="layui-text-color">未设置</span>
+    {{# } }}
+</script>
+
+<!-- 性别模板 -->
+<script type="text/html" id="genderTpl">
+    {{# if(d.gender == 1) { }}
+    <span>男</span>
+    {{# } else if(d.gender == 2) { }}
+    <span>女</span>
+    {{# } }}
+</script>
+
+<!-- 学校名称模板 -->
+<script type="text/html" id="schoolTpl">
+    {{# if(d.school && d.school.name) { }}
+    <span>{{d.school.name}}</span>
+    {{# } else { }}
+    <span class="layui-text-color">未设置</span>
+    {{# } }}
+</script>
+
+<!-- 学院名称模板 -->
+<script type="text/html" id="collegeTpl">
+    {{# if(d.college && d.college.name) { }}
+    <span>{{d.college.name}}</span>
+    {{# } else { }}
+    <span class="layui-text-color">未设置</span>
+    {{# } }}
+</script>
+{/block}
+
+{block name="script"}
+<script>
+layui.use(['table', 'form', 'layer'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    
+    // 渲染表格
+    var tableIns = table.render({
+        elem: '#teacherTable',
+        url: '/admin/teacher/index',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'real_name', title: '姓名', width: 100},
+            {field: 'teacher_no', title: '工号', width: 120},
+            {field: 'school', title: '所属学校', width: 150, templet: '#schoolTpl'},
+            {field: 'college', title: '所属学院', width: 150, templet: '#collegeTpl'},
+            {field: 'title', title: '职称', width: 100, templet: '#titleTpl'},
+            {field: 'phone', title: '手机号', width: 120},
+            {field: 'email', title: '邮箱'},
+            {field: 'status', title: '状态', width: 80, templet: '#statusTpl'},
+            {field: 'create_time', title: '创建时间'},
+            {title: '操作', toolbar: '#operationBar', fixed: 'right'}
+        ]],
+        limits: [10, 20, 50, 100],
+        limit: 20
+    });
+    
+    // 搜索
+    form.on('submit(search)', function(data){
+        tableIns.reload({
+            where: data.field,
+            page: {curr: 1}
+        });
+        return false;
+    });
+    
+    // 监听工具条
+    table.on('tool(teacherTable)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'edit'){
+            layer.open({
+                type: 2,
+                title: '编辑教师',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['900px', '700px'],
+                content: '/admin/teacher/edit?id=' + data.id
+            });
+        } else if(obj.event === 'detail'){
+            layer.open({
+                type: 2,
+                title: '教师详情',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['900px', '700px'],
+                content: '/admin/teacher/detail?id=' + data.id
+            });
+        } else if(obj.event === 'del'){
+            layer.confirm('确定删除此教师？', function(index){
+                $.post('/admin/teacher/delete', {id: data.id}, function(res){
+                    if(res.code === 0){
+                        layer.msg('删除成功');
+                        obj.del();
+                    } else {
+                        layer.msg(res.msg || '删除失败');
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'disable'){
+            layer.confirm('确定禁用此教师？', function(index){
+                $.post('/admin/teacher/changeStatus', {id: data.id, status: 0}, function(res){
+                    if(res.code === 0){
+                        layer.msg('禁用成功');
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '禁用失败');
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'enable'){
+            layer.confirm('确定启用此教师？', function(index){
+                $.post('/admin/teacher/changeStatus', {id: data.id, status: 1}, function(res){
+                    if(res.code === 0){
+                        layer.msg('启用成功');
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '启用失败');
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'approve'){
+            layer.confirm('确定审核通过此教师？', function(index){
+                $.post('/admin/teacher/changeStatus', {id: data.id, status: 1}, function(res){
+                    if(res.code === 0){
+                        layer.msg('审核成功');
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.msg || '审核失败');
+                    }
+                });
+                layer.close(index);
+            });
+        }
+    });
+    
+    // 添加教师按钮点击事件
+    $('#addTeacherBtn').click(function(){
+        layer.open({
+            type: 2,
+            title: '添加教师',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['900px', '700px'],
+            content: '/admin/teacher/add'
+        });
+    });
+    
+    // 加载学校数据
+    $.get('/admin/school/getList', function(res){
+        var list = (res.data && res.data.list) ? res.data.list : (res.data || []);
+        var html = '<option value="">全部学校</option>';
+        list.forEach(function(item){
+            html += '<option value="' + item.id + '">' + item.name + '</option>';
+        });
+        $('select[name="school_id"]').html(html);
+        form.render('select');
+        // 如果初始有选中学校，自动加载学院
+        var schoolId = $('select[name="school_id"]').val();
+        if(schoolId){
+            loadColleges(schoolId);
+        }
+    });
+    // 加载学院数据函数
+    function loadColleges(schoolId) {
+        $.get('/admin/college/getList', {school_id: schoolId}, function(res){
+            var list = (res.data && res.data.list) ? res.data.list : (res.data || []);
+            var html = '<option value="">全部学院</option>';
+            list.forEach(function(item){
+                html += '<option value="' + item.id + '">' + item.name + '</option>';
+            });
+            $('select[name="college_id"]').html(html);
+            form.render('select');
+        });
+    }
+    // 学校变化时加载学院
+    form.on('select(school)', function(data){
+        var schoolId = data.value;
+        if(schoolId){
+            loadColleges(schoolId);
+        } else {
+            $('select[name="college_id"]').html('<option value="">全部学院</option>');
+            form.render('select');
+        }
+    });
+    // 重置按钮时，重置学院下拉
+    $(document).on('click', 'button[type="reset"]', function(){
+        setTimeout(function(){
+            $('select[name="college_id"]').html('<option value="">全部学院</option>');
+            form.render('select');
+        }, 100);
+    });
+});
+</script>
+{/block} 

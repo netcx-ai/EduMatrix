@@ -1,0 +1,156 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-fluid">
+    <div class="layui-card">
+        <div class="layui-card-header">用户操作日志</div>
+        <div class="layui-card-body">
+            <form class="layui-form" lay-filter="search-form">
+                <div class="layui-form-item">
+                    <div class="layui-inline">
+                        <label class="layui-form-label">用户名</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="username" placeholder="用户名/姓名" autocomplete="off" class="layui-input">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">用户类型</label>
+                        <div class="layui-input-inline">
+                            <select name="type">
+                                <option value="">全部</option>
+                                <option value="teacher">教师</option>
+                                <option value="school_admin">学校管理员</option>
+                                <option value="student">学生</option>
+                                <option value="member">普通会员</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">状态</label>
+                        <div class="layui-input-inline">
+                            <select name="status">
+                                <option value="">全部</option>
+                                <option value="1">成功</option>
+                                <option value="0">失败</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <label class="layui-form-label">日期范围</label>
+                        <div class="layui-input-inline">
+                            <input type="text" name="date_range" class="layui-input" id="date-range" placeholder="选择日期范围">
+                        </div>
+                    </div>
+                    <div class="layui-inline">
+                        <button class="layui-btn" lay-submit lay-filter="search">
+                            <i class="layui-icon layui-icon-search"></i> 搜索
+                        </button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+            
+            <div class="layui-btn-container">
+                <button class="layui-btn layui-btn-sm" id="export-btn">
+                    <i class="layui-icon layui-icon-export"></i> 导出
+                </button>
+                <button class="layui-btn layui-btn-sm layui-btn-danger" id="clean-btn">
+                    <i class="layui-icon layui-icon-delete"></i> 清理日志
+                </button>
+            </div>
+            
+            <table id="log-table" lay-filter="log-table"></table>
+        </div>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script type="text/html" id="statusTpl">
+    {{# if(d.login_status == 1){ }}
+        <span class="layui-badge layui-bg-green">成功</span>
+    {{# } else { }}
+        <span class="layui-badge">失败</span>
+    {{# } }}
+</script>
+
+<script type="text/html" id="typeTpl">
+    {{# if(d.login_type == 'teacher'){ }}
+        <span class="layui-badge layui-bg-blue">教师</span>
+    {{# } else if(d.login_type == 'school_admin'){ }}
+        <span class="layui-badge layui-bg-orange">学校管理员</span>
+    {{# } else if(d.login_type == 'student'){ }}
+        <span class="layui-badge layui-bg-cyan">学生</span>
+    {{# } else if(d.login_type == 'member'){ }}
+        <span class="layui-badge layui-bg-green">普通会员</span>
+    {{# } else { }}
+        <span class="layui-badge">{{d.login_type}}</span>
+    {{# } }}
+</script>
+
+<script>
+layui.use(['table', 'form', 'laydate'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var laydate = layui.laydate;
+    
+    // 日期范围选择器
+    laydate.render({
+        elem: '#date-range',
+        type: 'date',
+        range: true
+    });
+    
+    // 表格实例
+    table.render({
+        elem: '#log-table',
+        url: '/admin/user_log/index',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'username', title: '用户名'},
+            {field: 'real_name', title: '姓名'},
+            {field: 'login_time', title: '操作时间',sort: true},
+            {field: 'login_ip', title: '操作IP'},
+            {field: 'login_device', title: '操作设备'},
+            {field: 'login_status', title: '状态', templet: '#statusTpl'},
+            {field: 'login_type', title: '用户类型', templet: '#typeTpl'},
+            {field: 'fail_reason', title: '失败原因'}
+        ]],
+        limits: [15, 30, 50, 100],
+        limit: 15
+    });
+    
+    // 搜索
+    form.on('submit(search)', function(data){
+        table.reload('log-table', {
+            where: data.field,
+            page: {curr: 1}
+        });
+        return false;
+    });
+    
+    // 导出
+    $('#export-btn').on('click', function(){
+        var queryParams = form.val('search-form');
+        var url = '/admin/user_log/export?' + $.param(queryParams);
+        window.location.href = url;
+    });
+    
+    // 清理日志
+    $('#clean-btn').on('click', function(){
+        layer.confirm('确定要清理30天前的日志吗？', {icon: 3, title:'提示'}, function(index){
+            $.post('/admin/user_log/clean', {days: 30}, function(res){
+                if(res.code === 0){
+                    layer.msg(res.msg, {icon: 1});
+                    table.reload('log-table');
+                } else {
+                    layer.msg(res.msg, {icon: 2});
+                }
+            });
+            layer.close(index);
+        });
+    });
+});
+</script>
+{/block} 

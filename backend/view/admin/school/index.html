@@ -1,0 +1,293 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-card">
+    <div class="layui-card-header">
+        <div class="layui-row">
+            <div class="layui-col-md6">
+                <span class="layui-breadcrumb">
+                    <a href="/admin/index/index">首页</a>
+                    <a><cite>学校管理</cite></a>
+                </span>
+            </div>
+            <div class="layui-col-md6 text-right">
+                <button class="layui-btn layui-btn-normal" id="addSchoolBtn">
+                    <i class="layui-icon">&#xe654;</i> 添加学校
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="layui-card-body">
+        <!-- 搜索栏 -->
+        <div class="layui-form layui-form-pane" style="margin-bottom: 15px;">
+            <div class="layui-form-item">
+                <div class="layui-inline">
+                    <label class="layui-form-label">关键词</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="keyword" placeholder="学校名称/编码/简称" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">状态</label>
+                    <div class="layui-input-inline">
+                        <select name="status">
+                            <option value="">全部</option>
+                            <option value="1">启用</option>
+                            <option value="0">禁用</option>
+                            <option value="2">待审核</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">省份</label>
+                    <div class="layui-input-inline">
+                        <select name="province" lay-filter="province">
+                            <option value="">全部省份</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">城市</label>
+                    <div class="layui-input-inline">
+                        <select name="city">
+                            <option value="">全部城市</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <label class="layui-form-label">类型</label>
+                    <div class="layui-input-inline">
+                        <select name="school_type">
+                            <option value="">全部类型</option>
+                            <option value="1">小学</option>
+                            <option value="2">初中</option>
+                            <option value="3">高中</option>
+                            <option value="4">大学</option>
+                            <option value="5">其他</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-inline">
+                    <button class="layui-btn" lay-submit lay-filter="search">
+                        <i class="layui-icon">&#xe615;</i> 搜索
+                    </button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据表格 -->
+        <table id="schoolTable" lay-filter="schoolTable"></table>
+    </div>
+</div>
+
+<!-- 操作按钮模板 -->
+<script type="text/html" id="operationBar">
+    <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="detail">详情</a>
+    {{# if(d.status == 1) { }}
+    <a class="layui-btn layui-btn-xs layui-btn-warm" lay-event="disable">禁用</a>
+    {{# } else if(d.status == 0) { }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="enable">启用</a>
+    {{# } else if(d.status == 2) { }}
+    <a class="layui-btn layui-btn-xs layui-btn-normal" lay-event="approve">审核</a>
+    {{# } }}
+    <a class="layui-btn layui-btn-xs layui-btn-danger" lay-event="del">删除</a>
+</script>
+
+<!-- 状态模板 -->
+<script type="text/html" id="statusTpl">
+    {{# if(d.status == 1) { }}
+    <span class="layui-badge layui-bg-green">启用</span>
+    {{# } else if(d.status == 0) { }}
+    <span class="layui-badge">禁用</span>
+    {{# } else if(d.status == 2) { }}
+    <span class="layui-badge layui-bg-orange">待审核</span>
+    {{# } }}
+</script>
+
+<!-- 学校类型模板 -->
+<script type="text/html" id="schoolTypeTpl">
+    {{# if(d.school_type == 1) { }}
+    <span>小学</span>
+    {{# } else if(d.school_type == 2) { }}
+    <span>初中</span>
+    {{# } else if(d.school_type == 3) { }}
+    <span>高中</span>
+    {{# } else if(d.school_type == 4) { }}
+    <span>大学</span>
+    {{# } else if(d.school_type == 5) { }}
+    <span>其他</span>
+    {{# } }}
+</script>
+
+<!-- 到期状态模板 -->
+<script type="text/html" id="expireTpl">
+    {{# if(d.is_expired) { }}
+    <span class="layui-badge layui-bg-red">已过期</span>
+    {{# } else { }}
+    <span class="layui-badge layui-bg-green">正常</span>
+    {{# } }}
+</script>
+{/block}
+
+{block name="script"}
+<script>
+layui.use(['table', 'form', 'layer'], function(){
+    var table = layui.table;
+    var form = layui.form;
+    var layer = layui.layer;
+    
+    // 渲染表格
+    var tableIns = table.render({
+        elem: '#schoolTable',
+        url: '/admin/school/index',
+        page: true,
+        cols: [[
+            {field: 'id', title: 'ID', width: 80, sort: true},
+            {field: 'name', title: '学校名称', width: 200},
+            {field: 'code', title: '学校编码', width: 120},
+            {field: 'short_name', title: '简称', width: 100},
+            {field: 'province', title: '省份', width: 100},
+            {field: 'city', title: '城市', width: 100},
+            {field: 'school_type', title: '类型', width: 80, templet: '#schoolTypeTpl'},
+            {field: 'contact_person', title: '联系人', width: 100},
+            {field: 'contact_phone', title: '联系电话', width: 120},
+            {field: 'college_count', title: '学院数', width: 80, align: 'center'},
+            {field: 'teacher_count', title: '教师数', width: 80, align: 'center'},
+            {field: 'status', title: '状态', width: 80, templet: '#statusTpl'},
+            {field: 'is_expired', title: '到期状态', width: 100, templet: '#expireTpl'},
+            {field: 'create_time', title: '创建时间', width: 160},
+            {title: '操作', toolbar: '#operationBar', fixed: 'right', width: 200}
+        ]],
+        limits: [10, 20, 50, 100],
+        limit: 20
+    });
+    
+    // 搜索
+    form.on('submit(search)', function(data){
+        tableIns.reload({
+            where: data.field,
+            page: {curr: 1}
+        });
+        return false;
+    });
+    
+    // 监听工具条
+    table.on('tool(schoolTable)', function(obj){
+        var data = obj.data;
+        if(obj.event === 'edit'){
+            layer.open({
+                type: 2,
+                title: '编辑学校',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['900px', '700px'],
+                content: '/admin/school/edit?id=' + data.id
+            });
+        } else if(obj.event === 'detail'){
+            layer.open({
+                type: 2,
+                title: '学校详情',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['900px', '700px'],
+                content: '/admin/school/detail?id=' + data.id
+            });
+        } else if(obj.event === 'del'){
+            layer.confirm('确定删除此学校？', function(index){
+                $.post('/admin/school/delete', {id: data.id}, function(res){
+                    if(res.code === 0){
+                        layer.msg('删除成功');
+                        obj.del();
+                    } else {
+                        layer.msg(res.message);
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'disable'){
+            layer.confirm('确定禁用此学校？', function(index){
+                $.post('/admin/school/changeStatus', {id: data.id, status: 0}, function(res){
+                    if(res.code === 0){
+                        layer.msg('禁用成功');
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.message);
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'enable'){
+            layer.confirm('确定启用此学校？', function(index){
+                $.post('/admin/school/changeStatus', {id: data.id, status: 1}, function(res){
+                    if(res.code === 0){
+                        layer.msg('启用成功');
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.message);
+                    }
+                });
+                layer.close(index);
+            });
+        } else if(obj.event === 'approve'){
+            layer.confirm('确定审核通过此学校？', function(index){
+                $.post('/admin/school/changeStatus', {id: data.id, status: 1}, function(res){
+                    if(res.code === 0){
+                        layer.msg('审核成功');
+                        tableIns.reload();
+                    } else {
+                        layer.msg(res.message);
+                    }
+                });
+                layer.close(index);
+            });
+        }
+    });
+    
+    // 添加学校按钮点击事件
+    $('#addSchoolBtn').click(function(){
+        layer.open({
+            type: 2,
+            title: '添加学校',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['900px', '700px'],
+            content: '/admin/school/add'
+        });
+    });
+    
+    // 加载省份数据
+    $.get('/admin/school/provinces', function(res){
+        if(res.code === 0){
+            var html = '<option value="">全部省份</option>';
+            res.data.forEach(function(item){
+                html += '<option value="' + item + '">' + item + '</option>';
+            });
+            $('select[name="province"]').html(html);
+            form.render('select');
+        }
+    });
+    
+    // 省份变化时加载城市
+    form.on('select(province)', function(data){
+        var province = data.value;
+        if(province){
+            $.get('/admin/school/cities', {province: province}, function(res){
+                if(res.code === 0){
+                    var html = '<option value="">全部城市</option>';
+                    res.data.forEach(function(item){
+                        html += '<option value="' + item + '">' + item + '</option>';
+                    });
+                    $('select[name="city"]').html(html);
+                    form.render('select');
+                }
+            });
+        } else {
+            $('select[name="city"]').html('<option value="">全部城市</option>');
+            form.render('select');
+        }
+    });
+});
+</script>
+{/block} 

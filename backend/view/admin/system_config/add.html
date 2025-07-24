@@ -1,0 +1,117 @@
+{extend name="common/base" /}
+
+{block name="content"}
+<div class="layui-card">
+    <div class="layui-card-header">
+        <div class="layui-row">
+            <div class="layui-col-md6">
+                <span class="layui-breadcrumb">
+                    <a href="/admin/index/index">首页</a>
+                    <a href="/admin/system_config/index">系统配置</a>
+                    <a><cite>添加配置</cite></a>
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="layui-card-body">
+        <form class="layui-form" action="">
+            <div class="layui-form-item">
+                <label class="layui-form-label">配置类型</label>
+                <div class="layui-input-block">
+                    <select name="type" lay-verify="required">
+                        <option value="">请选择配置类型</option>
+                        {foreach $types as $key => $title}
+                        <option value="{$key}">{$title}</option>
+                        {/foreach}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="layui-form-item">
+                <label class="layui-form-label">配置名称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="name" required lay-verify="required" placeholder="请输入配置名称" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            
+            <div class="layui-form-item">
+                <label class="layui-form-label">服务商</label>
+                <div class="layui-input-block">
+                    <input type="text" name="driver" required lay-verify="required" placeholder="请输入服务商" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            
+            <div class="layui-form-item">
+                <label class="layui-form-label">配置信息</label>
+                <div class="layui-input-block">
+                    <textarea name="config" placeholder="请输入配置信息（JSON格式）" class="layui-textarea" style="height: 200px;"></textarea>
+                </div>
+            </div>
+            
+            <div class="layui-form-item">
+                <label class="layui-form-label">状态</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="status" value="1" title="启用" checked>
+                    <input type="radio" name="status" value="0" title="禁用">
+                </div>
+            </div>
+            
+            <div class="layui-form-item">
+                <label class="layui-form-label">默认配置</label>
+                <div class="layui-input-block">
+                    <input type="radio" name="is_default" value="1" title="是">
+                    <input type="radio" name="is_default" value="0" title="否" checked>
+                </div>
+            </div>
+            
+            <div class="layui-form-item">
+                <label class="layui-form-label">备注说明</label>
+                <div class="layui-input-block">
+                    <textarea name="remark" placeholder="请输入备注说明" class="layui-textarea"></textarea>
+                </div>
+            </div>
+            
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit lay-filter="add">立即提交</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{/block}
+
+{block name="script"}
+<script>
+layui.use(['form', 'layer'], function(){
+    var form = layui.form;
+    var layer = layui.layer;
+    
+    // 监听提交
+    form.on('submit(add)', function(data){
+        var loading = layer.load(2);
+        $.ajax({
+            url: '/admin/system_config/add',
+            type: 'POST',
+            data: data.field,
+            success: function(res){
+                layer.close(loading);
+                if(res.code == 1){
+                    layer.msg(res.msg, {icon: 1}, function(){
+                        location.href = '/admin/system_config/index';
+                    });
+                }else{
+                    layer.msg(res.msg, {icon: 2});
+                }
+            },
+            error: function(){
+                layer.close(loading);
+                layer.msg('服务器错误', {icon: 2});
+            }
+        });
+        return false;
+    });
+});
+</script>
+{/block} 
